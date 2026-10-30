@@ -1,0 +1,126 @@
+{
+  "name": "HuichuangAI demo fabric library",
+  "version": "0.1.0",
+  "generated_at": "2026-10-29T17:27:54.973209+00:00",
+  "license_policy": "CC0-only seed assets",
+  "catalog_source": "https://github.com/MorePET/mat-vis",
+  "catalog_source_note": "GitHub catalog/index used to identify open PBR material sources; image archives are fetched from the listed upstream CC0 source URLs.",
+  "materials": [
+    {
+      "id": "Fabric081C",
+      "name": "Cotton Weave / 081C",
+      "type": "cotton",
+      "tags": [
+        "cotton",
+        "woven",
+        "soft",
+        "neutral"
+      ],
+      "asset_id": "Fabric081C",
+      "file": "data/materials/fabric081c-color.jpg",
+      "preview_file": "data/materials/fabric081c-preview.png",
+      "source_repo": "https://github.com/MorePET/mat-vis",
+      "source_repo_ref": "dev",
+      "source_url": "https://ambientcg.com/a/Fabric081C",
+      "download_url": "https://ambientcg.com/get?file=Fabric081C_1K-JPG.zip",
+      "upstream": "ambientCG",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "material_type": "cotton",
+      "downloaded_at": "2026-10-29T17:27:54.973209+00:00",
+      "verification_status": "source-listed-cc0"
+    },
+    {
+      "id": "Fabric085",
+      "name": "Fine Woven / 085",
+      "type": "woven",
+      "tags": [
+        "woven",
+        "matte",
+        "suiting"
+      ],
+      "asset_id": "Fabric085",
+      "file": "data/materials/fabric085-color.jpg",
+      "preview_file": "data/materials/fabric085-preview.png",
+      "source_repo": "https://github.com/MorePET/mat-vis",
+      "source_repo_ref": "dev",
+      "source_url": "https://ambientcg.com/a/Fabric085",
+      "download_url": "https://ambientcg.com/get?file=Fabric085_1K-JPG.zip",
+      "upstream": "ambientCG",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "material_type": "woven",
+      "downloaded_at": "2026-10-29T17:27:54.973209+00:00",
+      "verification_status": "source-listed-cc0"
+    },
+    {
+      "id": "Fabric082A",
+      "name": "Textured Cloth / 082A",
+      "type": "woven",
+      "tags": [
+        "woven",
+        "texture",
+        "light"
+      ],
+      "asset_id": "Fabric082A",
+      "file": "data/materials/fabric082a-color.jpg",
+      "preview_file": "data/materials/fabric082a-preview.png",
+      "source_repo": "https://github.com/MorePET/mat-vis",
+      "source_repo_ref": "dev",
+      "source_url": "https://ambientcg.com/a/Fabric082A",
+      "download_url": "https://ambientcg.com/get?file=Fabric082A_1K-JPG.zip",
+      "upstream": "ambientCG",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "material_type": "woven",
+      "downloaded_at": "2026-10-29T17:27:54.973209+00:00",
+      "verification_status": "source-listed-cc0"
+    },
+    {
+      "id": "Fabric083",
+      "name": "Textured Cloth / 083",
+      "type": "woven",
+      "tags": [
+        "woven",
+        "texture",
+        "matte"
+      ],
+      "asset_id": "Fabric083",
+      "file": "data/materials/fabric083-color.jpg",
+      "preview_file": "data/materials/fabric083-preview.png",
+      "source_repo": "https://github.com/MorePET/mat-vis",
+      "source_repo_ref": "dev",
+      "source_url": "https://ambientcg.com/a/Fabric083",
+      "download_url": "https://ambientcg.com/get?file=Fabric083_1K-JPG.zip",
+      "upstream": "ambientCG",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "material_type": "woven",
+      "downloaded_at": "2026-10-29T17:27:54.973209+00:00",
+      "verification_status": "source-listed-cc0"
+    },
+    {
+      "id": "Fabric080",
+      "name": "Fine Knit / 080",
+      "type": "knit",
+      "tags": [
+        "knit",
+        "soft",
+        "stretch"
+      ],
+      "asset_id": "Fabric080",
+      "file": "data/materials/fabric080-color.jpg",
+      "preview_file": "data/materials/fabric080-preview.png",
+      "source_repo": "https://github.com/MorePET/mat-vis",
+      "source_repo_ref": "dev",
+      "source_url": "https://ambientcg.com/a/Fabric080",
+      "download_url": "https://ambientcg.com/get?file=Fabric080_1K-JPG.zip",
+      "upstream": "ambientCG",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "material_type": "knit",
+      "downloaded_at": "2026-10-29T17:27:54.973209+00:00",
+      "verification_status": "source-listed-cc0"
+    }
+  ]
+}

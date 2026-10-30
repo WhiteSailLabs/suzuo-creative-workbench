@@ -1,0 +1,83 @@
+{
+  "id": "huichuang-fashion-v1",
+  "name": "会创 AI · 面料驱动服装工作流",
+  "revision": 1,
+  "source_templates": [
+    {
+      "name": "gpt-image-2-t2i",
+      "file": "gpt-image-2-text-to-image.source.json",
+      "repo": "https://github.com/Comfy-Org/workflow_templates",
+      "license": "MIT"
+    },
+    {
+      "name": "gpt-image-2-image-edit",
+      "file": "gpt-image-2-image-edit.source.json",
+      "repo": "https://github.com/Comfy-Org/workflow_templates",
+      "license": "MIT"
+    }
+  ],
+  "execution": {
+    "provider": "openai-compatible",
+    "generate_path": "/v1/images/generations",
+    "edit_path": "/v1/images/edits",
+    "model": "gpt-image-2"
+  },
+  "nodes": [
+    {
+      "id": "brief",
+      "type": "brief",
+      "label": "需求 Brief",
+      "depends_on": [],
+      "editable": ["garment_type", "style", "color", "fit", "length", "collar", "sleeve", "negative_constraints"]
+    },
+    {
+      "id": "material_resolve",
+      "type": "material_resolve",
+      "label": "面料匹配",
+      "depends_on": ["brief"],
+      "editable": ["query", "material_ids", "selection_reason"]
+    },
+    {
+      "id": "reference_bind",
+      "type": "reference_bind",
+      "label": "参考图绑定",
+      "depends_on": ["brief"],
+      "editable": ["reference_ids", "roles", "preserve"]
+    },
+    {
+      "id": "prompt_compose",
+      "type": "prompt_compose",
+      "label": "提示词编排",
+      "depends_on": ["brief", "material_resolve", "reference_bind"],
+      "editable": ["prompt", "negative_prompt", "preserve"]
+    },
+    {
+      "id": "image_generate",
+      "type": "image_generate",
+      "label": "生成 V1",
+      "depends_on": ["prompt_compose"],
+      "editable": ["prompt", "model", "size", "quality", "background", "n"]
+    },
+    {
+      "id": "image_edit",
+      "type": "image_edit",
+      "label": "定向修改 V2",
+      "depends_on": ["image_generate", "reference_bind"],
+      "editable": ["prompt", "image_ids", "reference_ids", "mask", "model", "size", "quality"]
+    },
+    {
+      "id": "quality_check",
+      "type": "quality_check",
+      "label": "约束质量检查",
+      "depends_on": ["image_generate", "image_edit"],
+      "editable": ["checks", "threshold", "fail_action"]
+    },
+    {
+      "id": "artifact",
+      "type": "artifact_store",
+      "label": "版本与交付",
+      "depends_on": ["quality_check"],
+      "editable": ["version_label", "delivery_notes"]
+    }
+  ]
+}

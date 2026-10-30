@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4efe7"/><stop offset="1" stop-color="#d9dfde"/></linearGradient><linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e8e0d1"/><stop offset=".55" stop-color="#faf6ed"/><stop offset="1" stop-color="#c7c4b9"/></linearGradient><filter id="shadow"><feGaussianBlur stdDeviation="22"/></filter></defs>
+<rect width="900" height="1100" fill="url(#bg)"/><ellipse cx="450" cy="960" rx="260" ry="38" fill="#6f7978" opacity=".2" filter="url(#shadow)"/>
+<path d="M300 232 L384 176 L450 206 L516 176 L600 232 L678 448 L606 494 L572 392 L590 928 Q450 982 310 928 L328 392 L294 494 L222 448Z" fill="url(#cloth)" stroke="#aaa9a0" stroke-width="5"/>
+<path d="M384 176 L450 206 L516 176 L492 280 L450 316 L408 280Z" fill="#d2d0c5" stroke="#aaa9a0" stroke-width="4"/>
+<path d="M450 317 L450 921" stroke="#aaa9a0" stroke-width="4" opacity=".8"/><path d="M329 588 Q450 622 571 588" stroke="#b8b5ac" stroke-width="3" fill="none" opacity=".6"/><path d="M336 659 Q450 690 564 659" stroke="#b8b5ac" stroke-width="3" fill="none" opacity=".45"/>
+<path d="M386 304 Q450 327 514 304" stroke="#898e88" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="450" cy="445" r="5" fill="#898e88"/><circle cx="450" cy="510" r="5" fill="#898e88"/><circle cx="450" cy="575" r="5" fill="#898e88"/>
+<path d="M264 432 l26 20 M270 445 l26 20 M636 432 l-26 20 M630 445 l-26 20" stroke="#89958c" stroke-width="5" stroke-linecap="round"/>
+<text x="450" y="1030" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="18" fill="#6b7772" letter-spacing="4">V2 · COLLAR REFINED</text></svg>
