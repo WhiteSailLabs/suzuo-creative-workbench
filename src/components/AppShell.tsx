@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { AppView, ProjectSummary, Workspace } from '../types/workbench'
+import { ProductTour } from './ProductTour'
 
 const navigation: Array<[AppView, string]> = [['projects', '项目'], ['workbench', '工作台'], ['works', '作品'], ['assets', '资产'], ['reviews', '版本评审'], ['proposal', '提案']]
 export function AppShell({ view, onNavigate, projects, projectId, project, onSelectProject, offline, children }: {
@@ -7,6 +8,28 @@ export function AppShell({ view, onNavigate, projects, projectId, project, onSel
   project?: Workspace['project']; onSelectProject: (id: string) => void; offline: boolean; children: ReactNode
 }) {
   const options = projects.some(item => item.id === projectId) ? projects : project ? [project, ...projects] : projects
+  const [tourOpen, setTourOpen] = useState(false)
+  const [viewportTooSmall, setViewportTooSmall] = useState(false)
+
+  useEffect(() => {
+    if (view !== 'workbench') return
+    let seen = false
+    try { seen = window.sessionStorage.getItem('suzuo-product-tour-seen') === '1' } catch { /* storage can be unavailable in private contexts */ }
+    if (!seen) setTourOpen(true)
+  }, [view])
+
+  useEffect(() => {
+    const update = () => setViewportTooSmall(window.innerWidth < 1280 || window.innerHeight < 720)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  const closeTour = () => setTourOpen(false)
+  const completeTour = () => {
+    try { window.sessionStorage.setItem('suzuo-product-tour-seen', '1') } catch { /* ignore storage errors */ }
+  }
+
   return <div className="workbench-shell">
     <style>{`
       .global-header{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--paper)}
@@ -19,13 +42,15 @@ export function AppShell({ view, onNavigate, projects, projectId, project, onSel
     `}</style>
     <header className="global-header">
       <div className="brand"><span className="brand-seal">苏</span><strong>苏作创意台</strong></div>
-      <nav className="global-nav" aria-label="全局导航">{navigation.map(([id, label]) => <button key={id} aria-current={view === id ? 'page' : undefined} onClick={() => onNavigate(id)}>{label}</button>)}</nav>
+      <nav className="global-nav" aria-label="全局导航">{navigation.map(([id, label]) => <button key={id} aria-current={view === id ? 'page' : undefined} onClick={() => onNavigate(id)}>{label}</button>)}</nav><button className="tour-trigger" type="button" onClick={() => setTourOpen(true)}>产品导览</button>
       <div className="project-context">
         <label>当前项目<select aria-label="当前项目" value={projectId} onChange={event => onSelectProject(event.target.value)}>{!options.some(item => item.id === projectId) && <option value={projectId}>正在读取项目</option>}{options.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-        <small role="status">{offline ? '本地服务离线' : project ? '项目已同步' : '正在加载项目'}</small>
-        {project && <small>{project.stage_status === 'awaiting_confirmation' ? '等待确认' : project.stage_status === 'blocked' ? '阶段阻塞' : project.stage_status === 'done' ? '阶段完成' : '进行中'}</small>}
+        <small className={`status-pill ${offline ? 'status-offline' : 'status-synced'}`} role="status">{offline ? '本地服务离线' : project ? '项目已同步' : '正在加载项目'}</small>
+        {project && <small className="status-pill status-stage" role="status">{project.stage_status === 'awaiting_confirmation' ? '等待确认' : project.stage_status === 'blocked' ? '阶段阻塞' : project.stage_status === 'done' ? '阶段完成' : '进行中'}</small>}
       </div>
     </header>
+    {view === 'workbench' && viewportTooSmall && <div className="viewport-notice" role="alert"><strong>建议扩大窗口</strong><span>当前窗口低于 1280 × 720 的完整工作台尺寸。</span></div>}
+    <ProductTour open={tourOpen} onClose={closeTour} onComplete={completeTour} />
     {children}
   </div>
 }

@@ -166,6 +166,21 @@ describe('project navigation', () => {
   })
 })
 
+describe('responsive workbench shell', () => {
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
+
+  it('shows an expand-window notice below the minimum desktop viewport', async () => {
+    vi.stubGlobal('innerWidth', 1200)
+    vi.stubGlobal('innerHeight', 700)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => workspace }))
+    render(<App />)
+
+    await userEvent.click(screen.getByRole('button', { name: '工作台' }))
+    expect(await screen.findByText('建议扩大窗口')).toBeInTheDocument()
+    expect(screen.getByText('当前窗口低于 1280 × 720 的完整工作台尺寸。')).toBeInTheDocument()
+  })
+})
+
 
 it('ignores a stale workspace response after switching away and back to the same project', async () => {
   let resolveInitial!: (value: unknown) => void
