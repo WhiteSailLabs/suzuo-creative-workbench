@@ -183,3 +183,56 @@ it('ignores a stale workspace response after switching away and back to the same
   expect(screen.getByText('新状态材质')).toBeInTheDocument()
   vi.unstubAllGlobals()
 })
+
+it('cancels the old speech session on project switch and ignores queued callbacks while keeping new speech functional', async () => {
+  type ResultEvent = { results: ArrayLike<{ 0: { transcript: string } }> }
+  class Recognition {
+    static instances: Recognition[] = []
+    lang = ''; interimResults = false; continuous = false
+    onresult: ((event: ResultEvent) => void) | null = null
+    onend: (() => void) | null = null
+    onerror: (() => void) | null = null
+    start = vi.fn()
+    stop = vi.fn()
+    abort = vi.fn()
+    constructor() { Recognition.instances.push(this) }
+  }
+  vi.stubGlobal('SpeechRecognition', Recognition)
+  const card = { ...workspace.project, latest_version_id: null, latest_version_label: null, image_count: 0, model_count: 0, pending_count: 0 }
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.endsWith('/projects')) return { ok: true, json: async () => [card, { ...card, id: 'second', name: '另一个项目' }] }
+    return { ok: true, json: async () => ({ ...workspace, project: url.endsWith('/second') ? { ...workspace.project, id: 'second', name: '另一个项目' } : workspace.project }) }
+  }))
+  try {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: '工作台' }))
+    await userEvent.click(await screen.findByRole('button', { name: '开始语音输入' }))
+    const old = Recognition.instances[0]
+    // Keep the queued callback itself: removing the handler alone cannot invalidate it.
+    const lateResult = old.onresult!
+    const lateEnd = old.onend!
+    const lateError = old.onerror!
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前项目' }), 'second')
+    await screen.findByLabelText('描述或修改设计')
+    await act(async () => { lateResult({ results: [{ 0: { transcript: '旧项目的迟到语音' } }] }) })
+    expect(screen.getByLabelText('描述或修改设计')).toHaveValue('')
+    expect(old.abort).toHaveBeenCalledOnce()
+    expect(old.onresult).toBeNull()
+    expect(old.onend).toBeNull()
+    expect(old.onerror).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: '开始语音输入' }))
+    const current = Recognition.instances[1]
+    await act(async () => { lateEnd(); lateError() })
+    expect(screen.getByRole('button', { name: '停止语音输入' })).toBeInTheDocument()
+    const stoppedResult = current.onresult!
+    await userEvent.click(screen.getByRole('button', { name: '停止语音输入' }))
+    await act(async () => { stoppedResult({ results: [{ 0: { transcript: '停止后的迟到语音' } }] }) })
+    expect(screen.getByLabelText('描述或修改设计')).toHaveValue('')
+    expect(current.stop).toHaveBeenCalledOnce()
+
+    await userEvent.click(screen.getByRole('button', { name: '开始语音输入' }))
+    await act(async () => { Recognition.instances[2].onresult!({ results: [{ 0: { transcript: '新项目的有效语音' } }] }) })
+    expect(screen.getByLabelText('描述或修改设计')).toHaveValue('新项目的有效语音')
+  } finally { vi.unstubAllGlobals() }
+})
