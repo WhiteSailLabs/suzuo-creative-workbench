@@ -43,6 +43,38 @@ describe('asset library filters and cards', () => {
 })
 
 describe('asset relations and safe operations', () => {
+  it('shows editable evidence fields for cultural facts and disables verification until evidence is complete', async () => {
+    const culture = [{ id: 'culture1', title: '园林漏景', kind: 'fact' as const, statement: '', source_title: '', source_url: '', note: '', verified: false }]
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([asset({ source_culture_ids: ['culture1'] })])))
+    render(<AssetLibrary {...props} culture={culture} />)
+    expect(await screen.findByRole('heading', { name: '文化资料核验' })).toBeInTheDocument()
+    const panel = screen.getByRole('region', { name: '文化资料核验' })
+    expect(within(panel).getByText('文化事实')).toBeInTheDocument()
+    expect(within(panel).getByLabelText('来源标题-园林漏景')).toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: '标记为已核验-园林漏景' })).toBeDisabled()
+  })
+
+  it('patches complete cultural evidence and refreshes the card as verified', async () => {
+    const culture = [{ id: 'culture1', title: '园林漏景', kind: 'fact' as const, statement: '', source_title: '', source_url: '', note: '', verified: false }]
+    const fetcher = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'PATCH' && url.endsWith('/culture/culture1')) return response({ ...culture[0], statement: '园林借景通过框景形成层次', source_title: '苏州园林志', source_url: 'file://园林志.pdf', note: '核验时间：2026-10-31', verified: true })
+      return response([asset({ source_culture_ids: ['culture1'] })])
+    })
+    vi.stubGlobal('fetch', fetcher)
+    render(<AssetLibrary {...props} culture={culture} />)
+    const panel = await screen.findByRole('region', { name: '文化资料核验' })
+    await userEvent.type(within(panel).getByLabelText('来源标题-园林漏景'), '苏州园林志')
+    await userEvent.type(within(panel).getByLabelText('来源 URL 或文件标识-园林漏景'), 'file://园林志.pdf')
+    await userEvent.type(within(panel).getByLabelText('摘要/说明-园林漏景'), '园林借景通过框景形成层次')
+    await userEvent.type(within(panel).getByLabelText('核验时间-园林漏景'), '2026-10-31')
+    const verify = within(panel).getByRole('button', { name: '标记为已核验-园林漏景' })
+    expect(verify).toBeEnabled()
+    await userEvent.click(verify)
+    expect(fetcher).toHaveBeenCalledWith('http://127.0.0.1:8000/api/workbench/projects/p1/culture/culture1', expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ statement: '园林借景通过框景形成层次', source_title: '苏州园林志', source_url: 'file://园林志.pdf', note: '核验时间：2026-10-31', verified: true }) }))
+    expect(await within(panel).findByText('已核验')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('文化资料已更新')
+  })
+
   it('refreshes the full asset collection after candidate selection so old image/model become ineligible', async () => {
     const oldImage = asset({ status: 'reviewing', title: '旧二维' })
     const newImage = asset({ asset_id: 'image2', title: '新二维', status: 'completed', version_id: 'v3' })
@@ -98,12 +130,14 @@ describe('asset relations and safe operations', () => {
     render(<AssetLibrary {...props} jobs={[{ id: 'job3d', kind: 'rodin', status: 'completed', version_id: 'v2', artifact_id: 'model1', message: '完成', prompt: '', updated_at: '' }]} />)
     await userEvent.click(await screen.findByRole('button', { name: '查看漏景三维' }))
     const dialog = screen.getByRole('dialog', { name: '资产详情' })
+    await userEvent.click(within(dialog).getByRole('tab', { name: '来源关系' }))
     expect(await within(dialog).findByRole('region', { name: '资产关系图' })).toBeInTheDocument()
     expect(within(dialog).getByText('输入二维 → 漏景香插')).toBeInTheDocument()
     expect(within(dialog).getByText('来源版本：A-V2')).toBeInTheDocument()
     expect(within(dialog).getByText('父版本：A-V1')).toBeInTheDocument()
     expect(within(dialog).getByText('文化来源 → 园林漏景')).toBeInTheDocument()
     expect(within(dialog).getByText('生成任务 → job3d（已完成）')).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole('tab', { name: '设计说明' }))
     expect(within(dialog).getByText('所有者：设计师')).toBeInTheDocument()
     expect(within(dialog).getByText('权利说明：内部使用')).toBeInTheDocument()
     expect(within(dialog).getByText('材质状态：pbr')).toBeInTheDocument()

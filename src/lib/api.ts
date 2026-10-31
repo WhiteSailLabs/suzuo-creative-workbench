@@ -1,4 +1,4 @@
-import type { AssetFilters, AssetManifest, AssetPatch, AssetRecord, AssetRelations, ConversationTurn, DesignDirection, DesignVersion, DirectionCreate, GenerationJob, ProjectCreate, ProjectSummary, Proposal, ProposalAudience, ReviewCreate, ReviewRecord, ReviewStatus, StageGateAction, StageGateContext, StageGateResult, Workspace } from '../types/workbench'
+import type { AssetFilters, AssetManifest, AssetPatch, AssetRecord, AssetRelations, ConversationTurn, CulturalReference, DesignDirection, DesignVersion, DirectionCreate, GenerationJob, ProjectCreate, ProjectSummary, Proposal, ProposalAudience, ReviewCreate, ReviewRecord, ReviewStatus, StageGateAction, StageGateContext, StageGateResult, Workspace } from '../types/workbench'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 // Used by App only to load the legacy project on first launch.
@@ -27,6 +27,7 @@ const post = (payload?: unknown): RequestInit => ({ method: 'POST', ...(payload 
 export function listProjects() { return request<ProjectSummary[]>('/api/workbench/projects') }
 export function createProject(payload: ProjectCreate) { return request<Workspace>('/api/workbench/projects', post(payload)) }
 export function getWorkspace(projectId: string) { return request<Workspace>(projectPath(projectId)) }
+export function patchCulturalReference(projectId: string, referenceId: string, patch: Partial<Pick<CulturalReference, 'kind' | 'title' | 'statement' | 'source_title' | 'source_url' | 'note' | 'verified'>>) { return request<CulturalReference>(`${projectPath(projectId)}/culture/${encodeURIComponent(referenceId)}`, { method: 'PATCH', body: JSON.stringify(patch) }) }
 export function createDirection(projectId: string, payload: DirectionCreate) { return request<DesignDirection>(`${projectPath(projectId)}/directions`, post(payload)) }
 export function activateDirection(projectId: string, directionId: string) { return request<Workspace>(`${projectPath(projectId)}/directions/${encodeURIComponent(directionId)}/activate`, { method: 'PATCH' }) }
 export function createTurn(text: string, projectId: string, correctedTurnId?: string) { return request<ConversationTurn>(`${projectPath(projectId)}/turns`, post({ text, corrected_turn_id: correctedTurnId })) }
