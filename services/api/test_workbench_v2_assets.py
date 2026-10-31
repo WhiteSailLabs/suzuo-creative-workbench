@@ -192,6 +192,80 @@ class WorkbenchAssetsTests(unittest.TestCase):
         self.assertEqual(asset['status'], 'stale')
         self.assertEqual(self.client.patch(self.base + '/assets/old_model', json={'status': 'selected'}).status_code, 422)
 
+    def glb(self, directory, document=None):
+        if document is None:
+            document = {'asset': {'version': '2.0'}, 'meshes': [{'primitives': [{'material': 0}]}], 'materials': [{'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}}}], 'textures': [{'source': 0}], 'images': [{'bufferView': 0, 'mimeType': 'image/png'}], 'bufferViews': [{'buffer': 0, 'byteLength': 4}], 'buffers': [{'byteLength': 4}]}
+        body = json.dumps(document).encode()
+        body += b' ' * (-len(body) % 4)
+        path = Path(directory) / 'model.glb'
+        path.write_bytes(struct.pack('<4sII', b'glTF', 2, 28 + len(body) + 4) + struct.pack('<II', len(body), 0x4E4F534A) + body + struct.pack('<II', 4, 0x004E4942) + b'png!')
+        return {'id': 'late_model', 'kind': 'model_glb', 'path': str(path), 'url': '/model.glb', 'role': 'final'}
+
+    def test_rodin_completion_rechecks_candidate_and_frozen_input(self):
+        for change in ['candidate_rollback', 'archived_input', 'failed_input', 'stale_input', 'changed_input', 'missing_input']:
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+                # Reset each scenario while keeping the same real store bound to the API.
+                self.store.workspaces[self.project_id] = MemoryStore().workspaces[self.project_id]
+                v1 = self.image()
+                v2 = self.image('image_two', v1['id'])
+                self.store.select_candidate_version(self.project_id, v2['id'])
+                job = self.store.create_rodin_job(self.project_id, {'version_id': v2['id']})
+                if change == 'candidate_rollback':
+                    self.store.select_candidate_version(self.project_id, v1['id'])
+                elif change.endswith('_input') and change.split('_')[0] in {'archived', 'failed', 'stale'}:
+                    # Direct state change also verifies completion independently of candidate clearing in PATCH.
+                    next(a for a in self.store.workspaces[self.project_id]['assets'] if a['asset_id'] == 'image_two')['status'] = change.split('_')[0]
+                elif change == 'changed_input':
+                    v2['artifacts'][0]['path'] = '/tmp/replaced.png'
+                else:
+                    v2['artifacts'].clear()
+                result = self.store.complete_rodin_job(job['id'], self.glb(directory))
+                self.assertEqual(result['status'], 'stale')
+                asset = next(a for a in self.store.list_assets(self.project_id) if a['asset_id'] == 'late_model')
+                self.assertEqual(asset['status'], 'stale')
+                self.assertEqual(asset['role'], 'preview')
+                self.assertEqual(v2['artifacts'][-1]['role'], 'preview')
+                for status in ['selected', 'published']:
+                    self.assertEqual(self.client.patch(self.base + '/assets/late_model', json={'status': status}).status_code, 422)
+
+    def test_completed_job_replay_with_new_artifact_id_keeps_first_result(self):
+        v1 = self.image()
+        workspace = self.store.workspaces[self.project_id]
+        image_job = workspace['jobs'][-1]
+        image_result = dict(image_job)
+        self.store.complete_image_job(image_job['id'], {'id': 'replayed_image', 'kind': 'image', 'url': '/replay.png'})
+        self.assertEqual(image_job, image_result)
+        self.assertEqual(len(workspace['versions']), 1)
+        self.assertEqual([a['asset_id'] for a in workspace['assets']], ['image_one'])
+
+    def test_completed_rodin_replay_with_new_artifact_id_keeps_first_result(self):
+        version = self.image()
+        self.store.select_candidate_version(self.project_id, version['id'])
+        job = self.store.create_rodin_job(self.project_id, {'version_id': version['id']})
+        self.store.complete_rodin_job(job['id'], {'id': 'first_model', 'kind': 'model_glb', 'url': '/first.glb'})
+        result = dict(job)
+        self.store.complete_rodin_job(job['id'], {'id': 'second_model', 'kind': 'model_glb', 'url': '/second.glb'})
+        self.assertEqual(job, result)
+        self.assertEqual([a['id'] for a in version['artifacts']], ['image_one', 'first_model'])
+        self.assertEqual([a['asset_id'] for a in self.store.list_assets(self.project_id)], ['image_one', 'first_model'])
+
+    def test_malformed_glb_json_is_unverified_without_partial_final_artifact(self):
+        for document in [[], {'meshes': [None]}, {'meshes': [{'primitives': [None]}]}, {'meshes': None}]:
+            with self.subTest(document=document), tempfile.TemporaryDirectory() as directory:
+                self.store.workspaces[self.project_id] = MemoryStore().workspaces[self.project_id]
+                version = self.image()
+                self.store.select_candidate_version(self.project_id, version['id'])
+                job = self.store.create_rodin_job(self.project_id, {'version_id': version['id']})
+                artifact = self.glb(directory, document)
+                try:
+                    self.store.complete_rodin_job(job['id'], artifact)
+                except Exception as exc:
+                    self.fail(f'Malformed GLB must complete as unverified, raised {type(exc).__name__}: {exc}')
+                self.assertEqual(version['artifacts'][-1]['role'], 'preview')
+                asset = self.store.list_assets(self.project_id)[-1]
+                self.assertEqual((asset['status'], asset['material_status'], asset['role']), ('draft', 'unverified', 'preview'))
+                self.assertEqual(artifact['role'], 'final')  # Caller input was not mutated.
+
     def test_completion_is_idempotent(self):
         version = self.image()
         job = self.store.workspaces[self.project_id]['jobs'][-1]

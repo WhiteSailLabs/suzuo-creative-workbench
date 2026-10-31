@@ -146,6 +146,8 @@ class MemoryStore:
                 bin_size, bin_type = struct.unpack("<II", stream.read(8))
                 if bin_type != 0x004E4942 or bin_size + size + 28 != total:
                     return False
+            if not isinstance(document, dict):
+                return False
             materials = document.get("materials", [])
             textures = document.get("textures", [])
             images = document.get("images", [])
@@ -176,7 +178,7 @@ class MemoryStore:
                     or view.get("byteOffset", 0) + view["byteLength"] > bin_size):
                     return False
             return True
-        except (OSError, ValueError, KeyError, IndexError, TypeError, struct.error):
+        except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError, struct.error):
             return False
 
     @staticmethod
@@ -185,10 +187,9 @@ class MemoryStore:
                for j in workspace["jobs"]):
             raise GenerationConflict("当前项目已有同类生成任务正在进行")
 
-    def _upsert_asset(self, workspace, version, artifact, job):
+    def _asset_record(self, workspace, version, artifact, job):
+        """Build and validate a record without publishing partial completion state."""
         now = now_iso()
-        existing = next((a for a in workspace["assets"]
-                         if a["asset_id"] == artifact["id"]), None)
         direction = next((d for d in workspace["directions"]
                           if d["id"] == version.get("direction_id")), {})
         parent = next((v for v in workspace["versions"]
@@ -213,12 +214,21 @@ class MemoryStore:
             item["role"] = "final" if pbr and item["status"] == "completed" else "preview"
             if not pbr and item["status"] == "completed":
                 item["status"] = "draft"
+        return item
+
+    @staticmethod
+    def _save_asset(workspace, item):
+        existing = next((a for a in workspace["assets"]
+                         if a["asset_id"] == item["asset_id"]), None)
         if existing:
             existing.update({k: v for k, v in item.items()
                              if k not in {"title", "tags", "created_at", "owner", "rights_note"}})
             return existing
         workspace["assets"].append(item)
         return item
+
+    def _upsert_asset(self, workspace, version, artifact, job):
+        return self._save_asset(workspace, self._asset_record(workspace, version, artifact, job))
 
     def list_assets(self, project_id: str, filters=None):
         filters = filters or {}
@@ -471,7 +481,7 @@ class MemoryStore:
         self, job_id: str, artifact: dict[str, Any]
     ) -> dict[str, Any]:
         workspace, job = self._job_location(job_id)
-        if job.get("artifact_id") == artifact.get("id") and job.get("version_id"):
+        if job.get("artifact_id"):
             return job
         if not artifact.get("url") and not artifact.get("path"):
             raise ValueError("图片成果为空")
@@ -680,30 +690,61 @@ class MemoryStore:
         )
         return job
 
+    @staticmethod
+    def _rodin_inputs_current(workspace, version, job):
+        if workspace["project"].get("candidate_version_id") != version["id"]:
+            return False
+        if version.get("status") != "selected":
+            return False
+        snapshot = job.get("reference_snapshot") or []
+        if job.get("input_mode") != "image":
+            return True
+        if not snapshot or [a["artifact_id"] for a in snapshot] != job.get("reference_artifact_ids"):
+            return False
+        invalid = {"archived", "failed", "stale", "processing"}
+        for reference in snapshot:
+            artifact = next((a for a in version["artifacts"]
+                             if a["id"] == reference["artifact_id"] and a.get("kind") == "image"), None)
+            if artifact is None or artifact.get("path") != reference.get("path"):
+                return False
+            if artifact.get("media_type", "image/png") != reference.get("media_type", "image/png"):
+                return False
+            asset = next((a for a in workspace["assets"]
+                          if a["asset_id"] == reference["artifact_id"]), None)
+            # Legacy artifacts may predate the registry, but any registered record must remain eligible.
+            if asset and (asset["version_id"] != version["id"] or asset["status"] in invalid):
+                return False
+        return True
+
     def complete_rodin_job(
         self, job_id: str, artifact: dict[str, Any]
     ) -> dict[str, Any]:
         workspace, job = self._job_location(job_id)
+        # Completion is once per attempt, independent of the callback's artifact ID.
+        if job.get("artifact_id"):
+            return job
         version = next(
             item for item in workspace["versions"] if item["id"] == job["version_id"]
         )
-        if job.get("artifact_id") == artifact.get("id"):
-            return job
-        version["artifacts"].append(deepcopy(artifact))
         stale = (
             workspace["versions"][-1]["id"] != version["id"]
             or workspace["brief_revisions"][-1]["revision"] != job["brief_revision"]
+            or not self._rodin_inputs_current(workspace, version, job)
         )
-        job.update(
-            status="stale" if stale else "completed",
-            artifact_id=artifact["id"],
-            message="三维模型已完成，但关联旧版本" if stale else "三维概念模型已完成",
-            updated_at=now_iso(),
-        )
-        registered = self._upsert_asset(workspace, version, artifact, job)
-        if artifact.get("kind") == "model_glb":
-            saved = next(a for a in version["artifacts"] if a["id"] == artifact["id"])
-            saved.update(role=registered["role"], material_status=registered["material_status"])
+        completed = {
+            **job,
+            "status": "stale" if stale else "completed",
+            "artifact_id": artifact["id"],
+            "message": "三维模型已完成，但关联旧版本" if stale else "三维概念模型已完成",
+            "updated_at": now_iso(),
+        }
+        normalized = deepcopy(artifact)
+        registered = self._asset_record(workspace, version, normalized, completed)
+        normalized.update(role=registered["role"], material_status=registered["material_status"])
+        # All parsing and role normalization finish before any shared state is changed.
+        self._save_asset(workspace, registered)
+        version["artifacts"].append(normalized)
+        job.update(completed)
         if not stale:
             transition_stage(
                 workspace,
