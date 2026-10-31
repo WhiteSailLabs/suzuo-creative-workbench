@@ -210,6 +210,7 @@ class WorkbenchAssetsTests(unittest.TestCase):
         self.assertEqual([a['asset_id'] for a in manifest['assets']], ['image_one'])
         self.assertEqual(self.client.delete(self.base + '/proposal-assets/image_one').status_code, 200)
         self.assertEqual(self.client.get(self.base).json()['proposal_asset_ids'], [])
+        self.assertEqual(self.client.get(self.base + '/manifest').json()['assets'], [])
 
     def test_proposal_membership_rejects_unverified_models_and_invalid_assets(self):
         version = self.image()

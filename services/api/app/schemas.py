@@ -232,6 +232,7 @@ class WorkspaceOut(BaseModel):
     reviews: list[dict[str, Any]] = Field(default_factory=list)
     proposals: list[dict[str, Any]] = Field(default_factory=list)
     proposal_asset_ids: list[str] = Field(default_factory=list)
+    proposal_selection_explicit: bool = False
     brief_revisions: list[BriefRevision] = Field(default_factory=list)
     culture: list[CulturalReference] = Field(default_factory=list)
     turns: list[dict[str, Any]] = Field(default_factory=list)

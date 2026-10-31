@@ -105,7 +105,7 @@ class MemoryStore:
         workspace = {
             "project": project, "active_direction_id": None,
             "directions": [], "culture": [], "assets": [], "reviews": [],
-            "proposals": [], "proposal_asset_ids": [], "turns": [], "versions": [], "jobs": [],
+            "proposals": [], "proposal_asset_ids": [], "proposal_selection_explicit": False, "turns": [], "versions": [], "jobs": [],
             "brief_revisions": [{
                 "revision": 0, "confirmed": {}, "assumptions": {},
                 "conflicts": [], "missing": [], "source_turn_id": None,
@@ -324,6 +324,7 @@ class MemoryStore:
 
     def add_proposal_asset(self, project_id: str, asset_id: str) -> dict[str, Any]:
         workspace = self.workspaces[project_id]
+        workspace["proposal_selection_explicit"] = True
         self._prune_proposal_asset_ids(workspace)
         item = next((asset for asset in workspace["assets"] if asset["asset_id"] == asset_id), None)
         if item is None:
@@ -336,6 +337,7 @@ class MemoryStore:
 
     def remove_proposal_asset(self, project_id: str, asset_id: str) -> dict[str, Any]:
         workspace = self.workspaces[project_id]
+        workspace["proposal_selection_explicit"] = True
         ids = self._prune_proposal_asset_ids(workspace)
         if asset_id in ids:
             workspace["proposal_asset_ids"] = [item for item in ids if item != asset_id]
@@ -905,9 +907,9 @@ class MemoryStore:
                     for artifact in old_version["artifacts"]:
                         if artifact["id"] == asset["asset_id"]:
                             artifact["role"] = "preview"
-        self._prune_proposal_asset_ids(workspace)
         selected["status"] = "selected"
         workspace["project"]["candidate_version_id"] = version_id
+        self._prune_proposal_asset_ids(workspace)
         transition_stage(
             workspace,
             "prototyping",
@@ -971,7 +973,8 @@ class MemoryStore:
 
     def _proposal_assets(self, workspace):
         selected_ids = self._prune_proposal_asset_ids(workspace)
-        if selected_ids:
+        explicit = workspace.get("proposal_selection_explicit", bool(selected_ids))
+        if explicit:
             by_id = {asset["asset_id"]: asset for asset in workspace["assets"]}
             return [by_id[asset_id] for asset_id in selected_ids if asset_id in by_id]
         return self._deliverable_assets(workspace)
