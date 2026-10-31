@@ -175,3 +175,79 @@ class WorkbenchReviewsTests(unittest.TestCase):
         response = self.client.patch(self.base + '/reviews/' + self.review().json()['id'], json={'status': 'passed'})
         self.assertEqual(response.status_code, 409)
         self.assertIn('traceable_assets', response.json()['detail']['missing'])
+
+    def test_image_submission_enforces_brief_gate_and_conflict_priority(self):
+        from unittest.mock import AsyncMock
+        empty = self.store.create_project({'name': '空项目'})['project']['id']
+        base = '/api/workbench/projects/' + empty
+        with patch('app.main.run_workbench_image_job', new=AsyncMock()):
+            response = self.client.post(base + '/image-jobs', json={})
+            self.assertEqual(response.status_code, 409)
+            self.assertFalse(response.json()['detail']['allowed'])
+            self.assertIn('brief_direction_scene_or_target', response.json()['detail']['missing'])
+            self.assertTrue(response.json()['detail']['reason'])
+            self.assertTrue(response.json()['detail']['action'])
+            self.assertEqual(self.store.workspaces[empty]['jobs'], [])
+            self.assertEqual(self.client.post(self.base + '/image-jobs', json={}).status_code, 202)
+            self.ws['brief_revisions'][-1]['conflicts'] = [{'field': 'material'}]
+            duplicate = self.client.post(self.base + '/image-jobs', json={})
+            self.assertEqual(duplicate.status_code, 409)
+            self.assertEqual(duplicate.json()['detail'], '当前项目已有同类生成任务正在进行')
+
+    def test_typed_modify_context_and_actual_modify_require_changes_preserve(self):
+        from unittest.mock import AsyncMock
+        context = {'version_id': self.version['id'], 'changes': {'base': '加宽'}, 'preserve': ['镂空']}
+        self.assertTrue(self.client.post(self.base + '/stage-gates/modify_image', json=context).json()['allowed'])
+        incomplete = self.client.post(self.base + '/stage-gates/modify_image', json={'version_id': self.version['id']})
+        self.assertFalse(incomplete.json()['allowed'])
+        with patch('app.main.run_workbench_image_job', new=AsyncMock()):
+            no_base = self.client.post(self.base + '/image-jobs', json={'changes': {'base': '加宽'}, 'preserve': ['镂空']})
+            self.assertEqual(no_base.status_code, 409)
+            self.assertIn('base_version', no_base.json()['detail']['missing'])
+            blocked = self.client.post(self.base + '/image-jobs', json={'base_version_id': self.version['id']})
+            self.assertEqual(blocked.status_code, 409)
+            self.assertIn('changes', blocked.json()['detail']['missing'])
+            accepted = self.client.post(self.base + '/image-jobs', json={
+                'base_version_id': self.version['id'], 'changes': {'base': '加宽'}, 'preserve': ['镂空']})
+            self.assertEqual(accepted.status_code, 202)
+            job = accepted.json()
+            self.store.fail_generation_job(job['id'], 'network')
+            retry = self.client.post(self.base + '/jobs/' + job['id'] + '/retry')
+            self.assertEqual(retry.status_code, 202)
+            self.assertEqual(retry.json()['changes'], {'base': '加宽'})
+            self.store.complete_image_job(retry.json()['id'], {'id': 'modified', 'kind': 'image', 'url': '/modified.png'})
+            self.assertEqual(self.ws['versions'][-1]['changed_fields'], {'base': '加宽'})
+            self.assertEqual(self.ws['versions'][-1]['preserved_fields'], ['镂空'])
+
+    def test_rodin_submission_and_retry_enforce_current_local_reference_gate(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import AsyncMock
+        self.select()
+        with patch('app.main.run_workbench_rodin_job', new=AsyncMock()):
+            blocked = self.client.post(self.base + '/rodin-jobs', json={'version_id': self.version['id']})
+            self.assertEqual(blocked.status_code, 409)
+            self.assertFalse(blocked.json()['detail']['allowed'])
+            self.assertIn('local_primary_image', blocked.json()['detail']['missing'])
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / 'concept.png'
+                path.write_bytes(b'\x89PNG\r\n\x1a\nexample')
+                self.version['artifacts'][0]['path'] = str(path)
+                accepted = self.client.post(self.base + '/rodin-jobs', json={'version_id': self.version['id']})
+                self.assertEqual(accepted.status_code, 202)
+                job = accepted.json()
+                self.store.fail_generation_job(job['id'], 'network')
+                path.unlink()
+                retry = self.client.post(self.base + '/jobs/' + job['id'] + '/retry')
+                self.assertEqual(retry.status_code, 409)
+                self.assertIn('local_primary_image', retry.json()['detail']['missing'])
+
+    def test_image_retry_rechecks_current_brief_gate(self):
+        from unittest.mock import AsyncMock
+        job = self.store.create_image_job(self.pid, {})
+        self.store.fail_generation_job(job['id'], 'network')
+        self.ws['brief_revisions'][-1]['conflicts'] = [{'field': 'material'}]
+        with patch('app.main.run_workbench_image_job', new=AsyncMock()):
+            response = self.client.post(self.base + '/jobs/' + job['id'] + '/retry')
+            self.assertEqual(response.status_code, 409)
+            self.assertIn('unresolved_conflicts', response.json()['detail']['missing'])

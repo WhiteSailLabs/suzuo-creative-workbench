@@ -431,6 +431,27 @@ class MemoryStore:
             "纯色背景，产品设计渲染，展示稳定底座、镂空层次与香烟路径，不使用文字和旅游纪念品式符号。"
         )
 
+    def validate_generation_submission(self, project_id, kind, payload):
+        """API boundary guard, shared by submissions and retries; duplicates win."""
+        workspace = self.workspaces[project_id]
+        self._guard_generation(workspace, kind)
+        if kind == "rodin":
+            action = "generate_rodin"
+            context = {"version_id": payload.get("version_id"),
+                       "input_mode": payload.get("input_mode") or "image"}
+        else:
+            source = self._change_source_turn(workspace, payload.get("source_turn_id"))
+            modifying = (payload.get("base_version_id") or payload.get("changes") or payload.get("preserve")
+                         or (source and source.get("intent") == "MODIFY"))
+            action = "modify_image" if modifying else "generate_image"
+            patch = source.get("change_patch", {}) if source else {}
+            context = {"version_id": payload.get("base_version_id"),
+                       "changes": payload.get("changes") or patch.get("changes"),
+                       "preserve": payload.get("preserve") or patch.get("preserve")}
+        gate = self.stage_gate_status(project_id, action, context)
+        if not gate["allowed"]:
+            raise StageGateConflict(gate)
+
     def create_image_job(
         self, project_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
@@ -442,7 +463,13 @@ class MemoryStore:
         change_source_turn_id = (
             change_source_turn["id"] if change_source_turn else None
         )
+        explicit_changes = payload.get("changes") or {}
+        explicit_preserve = payload.get("preserve") or []
+        prompt = payload.get("prompt") or self._compose_image_prompt(workspace, source_turn_id, change_source_turn_id)
+        if explicit_changes or explicit_preserve:
+            prompt += f"；本轮明确变化：{json.dumps(explicit_changes, ensure_ascii=False)}；明确保留：{json.dumps(explicit_preserve, ensure_ascii=False)}"
         job = {
+            "changes": deepcopy(explicit_changes), "preserve": list(explicit_preserve),
             "id": new_id("job_image"),
             "kind": "image",
             "direction_id": workspace["project"].get("active_direction_id"),
@@ -450,10 +477,7 @@ class MemoryStore:
             "version_id": None,
             "artifact_id": None,
             "message": "图片任务已提交",
-            "prompt": payload.get("prompt")
-            or self._compose_image_prompt(
-                workspace, source_turn_id, change_source_turn_id
-            ),
+            "prompt": prompt,
             "brief_revision": workspace["brief_revisions"][-1]["revision"],
             "source_turn_id": source_turn_id,
             "change_source_turn_id": change_source_turn_id,
@@ -512,8 +536,8 @@ class MemoryStore:
             "brief_revision": job["brief_revision"],
             "source_turn_id": job.get("source_turn_id"),
             "change_source_turn_id": job.get("change_source_turn_id"),
-            "changed_fields": deepcopy(change.get("changes", {})),
-            "preserved_fields": list(change.get("preserve", [])),
+            "changed_fields": deepcopy(job.get("changes") or change.get("changes", {})),
+            "preserved_fields": list(job.get("preserve") or change.get("preserve", [])),
             "constraints": list(change.get("constraints", [])),
             "artifacts": [deepcopy(artifact)],
             "status": "draft",
@@ -579,6 +603,8 @@ class MemoryStore:
                 **common,
                 "source_turn_id": job.get("source_turn_id"),
                 "base_version_id": job.get("base_version_id"),
+                "changes": deepcopy(job.get("changes", {})),
+                "preserve": list(job.get("preserve", [])),
             },
         )
         retried["direction_id"] = job.get("direction_id")

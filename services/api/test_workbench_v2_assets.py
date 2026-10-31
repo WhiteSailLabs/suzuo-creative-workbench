@@ -17,6 +17,8 @@ from app.store import MemoryStore
 class WorkbenchAssetsTests(unittest.TestCase):
     def setUp(self):
         self.store = MemoryStore()
+        self.image_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.image_directory.cleanup)
         self.patcher = patch('app.main.store', self.store)
         self.patcher.start()
         self.addCleanup(self.patcher.stop)
@@ -25,10 +27,12 @@ class WorkbenchAssetsTests(unittest.TestCase):
         self.base = f'/api/workbench/projects/{self.project_id}'
 
     def image(self, asset_id='image_one', base_version_id=None):
+        path = Path(self.image_directory.name) / (asset_id + '.png')
+        path.write_bytes(b'\x89PNG\r\n\x1a\nexample')
         job = self.store.create_image_job(self.project_id, {'base_version_id': base_version_id})
         self.store.complete_image_job(job['id'], {
             'id': asset_id, 'kind': 'image', 'url': f'/api/workbench/assets/{asset_id}',
-            'path': f'/tmp/{asset_id}.png', 'media_type': 'image/png',
+            'path': str(path), 'media_type': 'image/png',
         })
         return self.store.workspaces[self.project_id]['versions'][-1]
 
@@ -102,7 +106,10 @@ class WorkbenchAssetsTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(self.store.workspaces[self.project_id]['project']['candidate_version_id'])
         with patch('app.main.run_workbench_rodin_job', new=AsyncMock()):
-            self.assertEqual(self.client.post(self.base + '/rodin-jobs', json={'version_id': version['id']}).status_code, 422)
+            blocked = self.client.post(self.base + '/rodin-jobs', json={'version_id': version['id']})
+            self.assertEqual(blocked.status_code, 409)
+            self.assertFalse(blocked.json()['detail']['allowed'])
+            self.assertIn('locked_candidate', blocked.json()['detail']['missing'])
 
     def test_relations_include_parent_inputs_and_downstream_models(self):
         v1 = self.image()

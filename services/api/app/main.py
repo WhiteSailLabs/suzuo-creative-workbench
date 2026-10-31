@@ -15,6 +15,7 @@ from .intent import TextInterpretationProvider, interpret_turn_with_provider
 from .providers.image import OpenAICompatibleImageProvider
 from .providers.rodin import RodinProvider
 from .schemas import (
+    StageGateContext,
     ReviewCreate,
     ReviewResolve,
     ReviewRecord,
@@ -298,7 +299,10 @@ async def create_workbench_image_job(
     if store.workspace_for_project(project_id) is None:
         raise HTTPException(404, "文创项目不存在")
     try:
+        store.validate_generation_submission(project_id, "image", payload.model_dump())
         job = store.create_image_job(project_id, payload.model_dump())
+    except StageGateConflict as exc:
+        raise HTTPException(409, exc.detail) from exc
     except GenerationConflict as exc:
         raise HTTPException(409, str(exc)) from exc
     except ValueError as exc:
@@ -380,7 +384,10 @@ async def create_workbench_rodin_job(
     if store.workspace_for_project(project_id) is None:
         raise HTTPException(404, "文创项目不存在")
     try:
+        store.validate_generation_submission(project_id, "rodin", payload.model_dump())
         job = store.create_rodin_job(project_id, payload.model_dump())
+    except StageGateConflict as exc:
+        raise HTTPException(409, exc.detail) from exc
     except GenerationConflict as exc:
         raise HTTPException(409, str(exc)) from exc
     except ValueError as exc:
@@ -415,7 +422,13 @@ async def retry_workbench_job(
     if store.generation_job(project_id, job_id) is None:
         raise HTTPException(404, "生成任务不存在")
     try:
+        original = store.generation_job(project_id, job_id)
+        if original["status"] != "failed":
+            raise ValueError("只有失败任务可以重试")
+        store.validate_generation_submission(project_id, original["kind"], original)
         job = store.retry_generation_job(job_id)
+    except StageGateConflict as exc:
+        raise HTTPException(409, exc.detail) from exc
     except GenerationConflict as exc:
         raise HTTPException(409, str(exc)) from exc
     except (KeyError, ValueError) as exc:
@@ -477,6 +490,15 @@ async def resolve_workbench_review(project_id: str, review_id: str, payload: Rev
     if review is None:
         raise HTTPException(404, "评审不存在")
     return review
+
+
+@app.post("/api/workbench/projects/{project_id}/stage-gates/{action}")
+async def check_workbench_stage_gate(project_id: str, action: str, payload: StageGateContext):
+    require_project(project_id)
+    try:
+        return store.stage_gate_status(project_id, action, payload.model_dump(exclude_none=True))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.get("/api/workbench/projects/{project_id}/stage-gates/{action}")

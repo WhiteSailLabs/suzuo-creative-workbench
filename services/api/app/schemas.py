@@ -163,6 +163,8 @@ class DesignVersion(BaseModel):
 
 
 class GenerationJob(BaseModel):
+    changes: dict[str, Any] = Field(default_factory=dict)
+    preserve: list[str] = Field(default_factory=list)
     id: str
     direction_id: Optional[str] = None
     kind: Literal["image", "rodin"]
@@ -187,7 +189,17 @@ class GenerationJob(BaseModel):
     updated_at: str
 
 
+class StageGateContext(BaseModel):
+    version_id: Optional[str] = None
+    confirmed: bool = False
+    input_mode: Literal["image", "text"] = "image"
+    changes: dict[str, Any] = Field(default_factory=dict)
+    preserve: list[str] = Field(default_factory=list)
+
+
 class ImageJobCreate(BaseModel):
+    changes: dict[str, Any] = Field(default_factory=dict)
+    preserve: list[str] = Field(default_factory=list)
     source_turn_id: Optional[str] = None
     base_version_id: Optional[str] = None
     prompt: str = ""
