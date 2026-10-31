@@ -1,0 +1,73 @@
+import { useEffect, useState } from 'react'
+import { assetDownloadUrl, listAssets, patchAsset } from '../lib/api'
+import { AssetDetailDrawer } from './AssetDetailDrawer'
+import type { AssetLibraryProps, AssetRecord } from '../types/workbench'
+
+export const assetTypeLabels: Record<string, string> = { image: '二维图', model_glb: '三维模型', material: '材质', culture: '文化资料', reference: '参考素材', structure: '结构', conversation: '对话', proposal: '提案' }
+export const assetStatusLabels: Record<string, string> = { draft: '草稿', reviewing: '评审中', selected: '候选', published: '已发布', archived: '已归档', processing: '处理中', completed: '已完成', failed: '失败', stale: '已过期' }
+
+export function AssetLibrary({ projectId, projectName, versions, directions, culture, jobs, onAssetsChanged, initialView = 'works' }: AssetLibraryProps) {
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [operationError, setOperationError] = useState('')
+  const [more, setMore] = useState<string | null>(null)
+  const [archive, setArchive] = useState<AssetRecord | null>(null)
+  const [proposalAssets, setProposalAssets] = useState<string[]>([])
+  const [assets, setAssets] = useState<AssetRecord[]>([])
+  const [view, setView] = useState(initialView)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [reload, setReload] = useState(0)
+  const [filters, setFilters] = useState({ type: '', status: '', direction: '', culture: '', material: '', query: '' })
+  const [selected, setSelected] = useState<AssetRecord | null>(null)
+  useEffect(() => { setView(initialView) }, [initialView])
+  useEffect(() => {
+    let active = true
+    setLoading(true); setAssets([]); setArchive(null); setMore(null); setProposalAssets([]); setNotice(''); setOperationError(''); setSelected(null); setError('')
+    listAssets(projectId).then(items => { if (active) { if (!Array.isArray(items)) throw new Error('资产列表响应格式无效'); setAssets(items) } }).catch(e => { if (active) setError(e instanceof Error ? e.message : '资产加载失败') }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [projectId, reload])
+  async function changeStatus(a: AssetRecord, status: 'selected' | 'archived') {
+    if (busy || a.project_id !== projectId || (status === 'selected' && !canSelectAsset(a, projectId))) return
+    setBusy(true); setOperationError(''); setNotice('')
+    try {
+      const updated = await patchAsset(projectId, a.asset_id, { status })
+      if (updated.project_id !== projectId || updated.status !== status) throw new Error('服务器未确认资产状态')
+      setAssets(items => items.map(item => item.asset_id === updated.asset_id ? updated : item))
+      setSelected(current => current?.asset_id === updated.asset_id ? updated : current)
+      setArchive(null); setNotice(status === 'selected' ? '已设为候选' : '已归档，保留本地文件'); onAssetsChanged?.()
+    } catch (e) { setOperationError(e instanceof Error ? e.message : '操作失败，请重试') }
+    finally { setBusy(false) }
+  }
+  const local = assets.filter(a => a.project_id === projectId)
+  const visible = local.filter(a => (!filters.type || a.asset_type === filters.type) && (!filters.status || a.status === filters.status) && (!filters.direction || a.direction_id === filters.direction) && (!filters.culture || a.source_culture_ids.includes(filters.culture)) && (!filters.material || a.material_status === filters.material || a.tags.includes(filters.material)) && (!filters.query.trim() || [a.title, ...a.tags, a.rights_note].join(' ').toLocaleLowerCase().includes(filters.query.trim().toLocaleLowerCase())))
+  const groups = new Map<string, AssetRecord[]>()
+  for (const a of visible) {
+    const group = view === 'assets' ? assetTypeLabels[a.asset_type] ?? a.asset_type : `${projectName} / ${directions.find(d => d.id === a.direction_id)?.name ?? a.direction_id ?? '未分方向'} / ${versions.find(v => v.id === a.version_id)?.label ?? '未关联版本'}`
+    groups.set(group, [...(groups.get(group) ?? []), a])
+  }
+  const select = (label: string, field: keyof typeof filters, values: string[], names: Record<string, string> = {}) => <label>{label}<select aria-label={label} value={filters[field]} onChange={e => setFilters(f => ({ ...f, [field]: e.target.value }))}><option value="">全部</option>{[...new Set(values)].map(v => <option key={v} value={v}>{names[v] ?? v}</option>)}</select></label>
+  return <main className="app-page"><section className="panel-card" style={{ padding: 24 }}><h1>{view === 'works' ? '作品' : '资产'}</h1><p>当前项目：{projectName} · {local.length} 项资产</p><div role="group" aria-label="作品库视图"><button aria-pressed={view === 'works'} onClick={() => setView('works')}>方案视图</button><button aria-pressed={view === 'assets'} onClick={() => setView('assets')}>资产视图</button></div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, margin: '18px 0' }}>
+      {select('类型', 'type', local.map(a => a.asset_type), assetTypeLabels)}{select('状态', 'status', local.map(a => a.status), assetStatusLabels)}{select('方向', 'direction', local.flatMap(a => a.direction_id ? [a.direction_id] : []), Object.fromEntries(directions.map(d => [d.id, d.name])))}{select('文化元素', 'culture', local.flatMap(a => a.source_culture_ids), Object.fromEntries(culture.map(c => [c.id, c.title])))}{select('材质', 'material', local.flatMap(a => [...(a.material_status ? [a.material_status] : []), ...a.tags]))}
+      <label>搜索资产<input type="search" aria-label="搜索资产" placeholder="名称、标签、权利说明" value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} /></label>
+    </div>
+    {operationError && <p role="alert">{operationError}</p>}{notice && <p role="status">{notice}</p>}{proposalAssets.length > 0 && <p>提案选材（当前会话）：{proposalAssets.map(id => local.find(a => a.asset_id === id)?.title).filter(Boolean).join('、')}</p>}
+    {loading ? <p role="status">正在加载资产…</p> : error ? <div role="alert">资产加载失败：{error}<button onClick={() => setReload(v => v + 1)}>重试</button></div> : !visible.length ? <p>没有符合条件的资产</p> : [...groups].map(([name, items]) => <section key={name}><h2>{name}</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: 16 }}>{items.map(a => {
+      const version = versions.find(v => v.id === a.version_id)
+      return <article className="panel-card" key={a.asset_id} aria-label={a.title} style={{ padding: 16 }}><button onClick={() => setSelected(a)} aria-label={`查看${a.title}`} style={{ display: 'block', width: '100%', textAlign: 'left' }}>{a.asset_type === 'image' && a.url && <img src={assetDownloadUrl(a.url)} alt={a.title} style={{ width: '100%', height: 160, objectFit: 'contain' }} />}<strong>{a.title}</strong></button><p>{assetTypeLabels[a.asset_type] ?? a.asset_type} · {version?.label ?? '未关联版本'}</p><p>父版本：{versions.find(v => v.id === version?.parent_version_id)?.label ?? '无'}</p><p>关联三维：{local.filter(m => m.asset_type === 'model_glb' && m.source_asset_ids.includes(a.asset_id)).length}</p><p>{assetStatusLabels[a.status]}</p><p>{a.source_culture_ids.map(id => <span key={id} style={{ marginRight: 8 }}>{culture.find(c => c.id === id)?.title ?? id}</span>)}</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {canSelectAsset(a, projectId) && <button disabled={busy} onClick={() => void changeStatus(a, 'selected')}>设为候选</button>}
+        <button disabled={a.status === 'archived' || a.status === 'failed' || a.status === 'stale' || a.status === 'processing'} onClick={() => setProposalAssets(ids => ids.includes(a.asset_id) ? ids : [...ids, a.asset_id])}>加入提案</button>
+        {assetDownloadUrl(a.url) ? <a href={assetDownloadUrl(a.url)} download>下载</a> : <span>暂无下载文件</span>}
+        <button aria-expanded={more === a.asset_id} onClick={() => setMore(current => current === a.asset_id ? null : a.asset_id)}>更多</button>
+        {more === a.asset_id && <div><button onClick={() => setSelected(a)}>查看来源</button><button disabled={busy || a.status === 'archived'} onClick={() => setArchive(a)}>归档</button></div>}
+      </div></article>
+    })}</div></section>)}
+    {selected && <AssetDetailDrawer key={selected.asset_id} projectId={projectId} asset={selected} culture={culture} jobs={jobs} onClose={() => setSelected(null)} onOpenAsset={id => { const target = local.find(a => a.asset_id === id); if (target) setSelected(target) }} />}
+    {archive && <dialog open role="alertdialog" aria-modal="true" aria-label="确认归档"><h2>确认归档</h2><p>归档“{archive.title}”？保留本地文件，归档后不能设为候选。</p><button disabled={busy} onClick={() => setArchive(null)}>取消</button><button disabled={busy} onClick={() => void changeStatus(archive, 'archived')}>确认归档</button></dialog>}
+  </section></main>
+}
+
+function canSelectAsset(asset: AssetRecord, projectId: string) {
+  return asset.project_id === projectId && !['archived', 'failed', 'stale', 'processing'].includes(asset.status) && (asset.asset_type !== 'model_glb' || asset.material_status === 'pbr') && !!asset.version_id
+}

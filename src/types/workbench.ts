@@ -68,3 +68,9 @@ export type AssetManifest = {
   brief: BriefRevision; culture_sources: ProposalCulture[]
   version_history: Array<Omit<DesignVersion, 'artifacts' | 'source_turn_id' | 'change_source_turn_id' | 'direction_id'>>
 }
+
+export type AssetLibraryProps = {
+  projectId: string; projectName: string; versions: DesignVersion[]; directions: DesignDirection[]
+  culture: CulturalReference[]; jobs: GenerationJob[]; initialView?: 'works' | 'assets'
+  onAssetsChanged?: () => void
+}
