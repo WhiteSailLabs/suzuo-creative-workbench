@@ -1,0 +1,82 @@
+[
+  {
+    "id": "real:garden-leak-window",
+    "project": "incense",
+    "title": "苏州园林漏景·月洞门",
+    "description": "真实摄影：苏州园林月洞门与框景关系，用于漏景香插的开孔、遮挡和前后层次参考。",
+    "image_url": "/assets/suzhou/real/suzhou-garden-leak-window.jpg",
+    "source_url": "https://dp.pconline.com.cn/dphoto/list_2088531.html",
+    "source": "太平洋电脑网摄影部落",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:garden-window-detail",
+    "project": "incense",
+    "title": "苏州留园·窗景细节",
+    "description": "真实摄影：留园窗景与叠石植物，用于香插漏景的景框比例和层次参考。",
+    "image_url": "/assets/suzhou/real/suzhou-garden-window-detail.jpg",
+    "source_url": "https://dp.pconline.com.cn/dphoto/348545.html",
+    "source": "太平洋电脑网摄影部落",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:suzhou-embroidery",
+    "project": "silk",
+    "title": "苏绣展品·丝线与纹样",
+    "description": "真实摄影：苏绣展览中的绣品与丝线细节，用于丝绸收纳盒的纹样、丝光和包覆关系参考。",
+    "image_url": "/assets/suzhou/real/suzhou-embroidery.jpg",
+    "source_url": "https://www.thepaper.cn/newsDetail_forward_23950263",
+    "source": "澎湃新闻·苏绣艺术文献展",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:suzhou-embroidery-artisan",
+    "project": "silk",
+    "title": "苏绣艺人·绷架刺绣",
+    "description": "真实摄影：苏绣艺人在绷架上刺绣的工作场景，用于收纳盒表面工艺、针法和丝线方向参考。",
+    "image_url": "/assets/suzhou/real/suzhou-embroidery-artisan.jpg",
+    "source_url": "https://m.thepaper.cn/newsDetail_forward_13915982",
+    "source": "澎湃新闻·苏绣报道",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:kunqu-water-sleeves",
+    "project": "kunqu",
+    "title": "昆曲水袖·舞台动作",
+    "description": "真实摄影：江苏昆曲演出中的水袖动作，用于水袖桌面灯的流线、飘带和灯罩曲面参考。",
+    "image_url": "/assets/suzhou/real/kunqu-water-sleeves.jpg",
+    "source_url": "https://www.sohu.com/a/217853790_685115",
+    "source": "搜狐·江苏昆剧院演出报道",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:kunqu-sleeve-training",
+    "project": "kunqu",
+    "title": "昆曲水袖·基本功训练",
+    "description": "真实摄影：昆曲演员水袖训练现场，用于灯罩动态曲线、摆动方向和边缘收束参考。",
+    "image_url": "/assets/suzhou/real/kunqu-sleeve-training.jpg",
+    "source_url": "https://www.whb.cn/u/cms/www/201908/311907134blq.jpg",
+    "source": "文汇报·昆曲集训展示",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:suzhou-embroidery-workshop",
+    "project": "silk",
+    "title": "苏绣工艺·绷架细节",
+    "description": "真实摄影：苏绣工艺与绷架工作场景，用于收纳盒表面纹理和工艺叙事参考。",
+    "image_url": "/assets/suzhou/real/suzhou-embroidery-workshop.jpg",
+    "source_url": "https://m.thepaper.cn/newsDetail_forward_13915982",
+    "source": "澎湃新闻·苏绣报道",
+    "license": "来源页摄影作品·展示参考"
+  },
+  {
+    "id": "real:kunqu-solo-sleeve",
+    "project": "kunqu",
+    "title": "昆曲演员·水袖舞姿",
+    "description": "真实摄影：昆曲演员单人水袖舞姿，用于桌面灯曲面轮廓和动态姿态参考。",
+    "image_url": "/assets/suzhou/real/kunqu-solo-sleeve.jpg",
+    "source_url": "https://www.sohu.com/a/477558761_121164478",
+    "source": "搜狐·昆曲报道",
+    "license": "来源页摄影作品·展示参考"
+  }
+]

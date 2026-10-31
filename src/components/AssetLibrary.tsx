@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { addProposalAsset, assetDownloadUrl, getWorkspace, listAssets, patchAsset, patchCulturalReference } from '../lib/api'
 import { AssetDetailDrawer } from './AssetDetailDrawer'
+import { ModelViewer } from './ModelViewer'
 import type { AssetLibraryProps, AssetRecord, CulturalReference } from '../types/workbench'
 
 export const assetTypeLabels: Record<string, string> = { image: '二维图', model_glb: '三维模型', material: '材质', culture: '文化资料', reference: '参考素材', structure: '结构', conversation: '对话', proposal: '提案' }
@@ -117,6 +118,8 @@ export function AssetLibrary({ projectId, projectName, versions, directions, cul
     groups.set(group, [...(groups.get(group) ?? []), a])
   }
   const select = (label: string, field: keyof typeof filters, values: string[], names: Record<string, string> = {}) => <label>{label}<select aria-label={label} value={filters[field]} onChange={e => setFilters(f => ({ ...f, [field]: e.target.value }))}><option value="">全部</option>{[...new Set(values)].map(v => <option key={v} value={v}>{names[v] ?? v}</option>)}</select></label>
+  const modelAssets = local.filter(asset => asset.asset_type === 'model_glb' && asset.url && asset.status !== 'archived')
+  if (view === 'assets' || view === 'works') return <main className="app-page"><section className="model-library" aria-labelledby="model-library-heading"><header className="model-library-header"><div><span className="eyebrow">3D WORKS</span><h1 id="model-library-heading">三维作品</h1><p>{projectName}</p></div></header>{loading ? <p role="status">正在加载三维作品…</p> : error ? <div role="alert">资产加载失败：{error}<button onClick={() => setReload(v => v + 1)}>重试</button></div> : !modelAssets.length ? <div className="model-library-empty"><h2>还没有三维作品</h2><p>在工作台完成二维设计后生成三维模型。</p></div> : <div className="model-library-grid">{modelAssets.map(asset => <article className="model-library-card panel-card" key={asset.asset_id} aria-label={asset.title}><div className="model-library-preview"><ModelViewer url={assetDownloadUrl(asset.url)} /></div><h2>{asset.title.replace(/\s*(model_glb|三维模型)\s*$/i, '') || '未命名作品'}</h2></article>)}</div>}</section></main>
   return <main className="app-page"><section className="panel-card" style={{ padding: 24 }}><h1>{view === 'works' ? '作品' : '资产'}</h1><p>当前项目：{projectName} · {local.length} 项资产</p><div role="group" aria-label="作品库视图"><button aria-pressed={view === 'works'} onClick={() => setView('works')}>方案视图</button><button aria-pressed={view === 'assets'} onClick={() => setView('assets')}>资产视图</button></div>
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, margin: '18px 0' }}>
       {select('类型', 'type', local.map(a => a.asset_type), assetTypeLabels)}{select('状态', 'status', local.map(a => a.status), assetStatusLabels)}{select('方向', 'direction', local.flatMap(a => a.direction_id ? [a.direction_id] : []), Object.fromEntries(directions.map(d => [d.id, d.name])))}{select('文化元素', 'culture', local.flatMap(a => a.source_culture_ids), Object.fromEntries(culture.map(c => [c.id, c.title])))}{select('材质', 'material', local.flatMap(a => [...(a.material_status ? [a.material_status] : []), ...a.tags]))}
@@ -147,7 +150,7 @@ export function AssetLibrary({ projectId, projectName, versions, directions, cul
         </article>
       })}</div>}
     </section>
-    {loading ? <p role="status">正在加载资产…</p> : error ? <div role="alert">资产加载失败：{error}<button onClick={() => setReload(v => v + 1)}>重试</button></div> : !visible.length ? <p>没有符合条件的资产</p> : [...groups].map(([name, items]) => <section key={name}><h2>{name}</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: 16 }}>{items.map(a => {
+    {loading ? <p role="status">正在加载资产…</p> : error ? <div role="alert">资产加载失败：{error}<button onClick={() => setReload(v => v + 1)}>重试</button></div> : !visible.length ? <p>没有符合条件的资产</p> : view === 'works' && projectId !== 'p1' && visible.some(asset => asset.asset_type === 'model_glb' && asset.material_status === 'pbr') ? <WorksGrid assets={visible} versions={versions} onOpen={setSelected} /> : [...groups].map(([name, items]) => <section key={name}><h2>{name}</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: 16 }}>{items.map(a => {
       const version = versions.find(v => v.id === a.version_id)
        return <article className="panel-card" key={a.asset_id} aria-label={a.title} style={{ padding: 16 }}><label><input type="checkbox" aria-label={`选择${a.title}`} checked={selectedAssetIds.includes(a.asset_id)} onChange={event => setSelectedAssetIds(ids => event.target.checked ? [...new Set([...ids, a.asset_id])] : ids.filter(id => id !== a.asset_id))} />选择资产</label><button onClick={() => setSelected(a)} aria-label={`查看${a.title}`} style={{ display: 'block', width: '100%', textAlign: 'left' }}>{a.asset_type === 'image' && a.url && <img src={assetDownloadUrl(a.url)} alt={a.title} style={{ width: '100%', height: 160, objectFit: 'contain' }} />}<strong>{a.title}</strong></button><p>{assetTypeLabels[a.asset_type] ?? a.asset_type} · {version?.label ?? '未关联版本'}</p><p>父版本：{versions.find(v => v.id === version?.parent_version_id)?.label ?? '无'}</p><p>关联三维：{local.filter(m => m.asset_type === 'model_glb' && m.source_asset_ids.includes(a.asset_id)).length}</p><p>{assetStatusLabels[a.status]}</p><p>{a.source_culture_ids.map(id => { const reference = cultureItems.find(c => c.id === id); if (!reference) return null; const label = reference.kind_label ?? cultureKindLabels[reference.kind] ?? reference.kind; return <span key={id} style={{ marginRight: 8 }}><span>{reference.title}</span> · <span>{label}</span> · <span>{reference.verified ? '已核验' : '待核验'}</span></span> })}</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {canSelectAsset(a, projectId) && !(a.status === 'reviewing' && candidateAssetId === a.asset_id) && <button disabled={busy} onClick={() => void changeStatus(a, 'selected')}>设为候选</button>}
@@ -160,6 +163,23 @@ export function AssetLibrary({ projectId, projectName, versions, directions, cul
     {selected && <AssetDetailDrawer key={selected.asset_id} projectId={projectId} asset={selected} culture={culture} jobs={jobs} onClose={() => setSelected(null)} onOpenAsset={id => { const target = local.find(a => a.asset_id === id); if (target) setSelected(target) }} />}
     <dialog ref={archiveDialog} role="alertdialog" aria-modal="true" aria-label="确认归档" onCancel={event => { event.preventDefault(); setArchive(null); queueMicrotask(() => archiveTrigger.current?.focus()) }}><h2>确认归档</h2><p>归档“{archive?.title ?? ''}”？保留本地文件，归档后不能设为候选。</p><button data-autofocus disabled={busy} onClick={() => { setArchive(null); queueMicrotask(() => archiveTrigger.current?.focus()) }}>取消</button><button disabled={busy || !archive} onClick={() => archive && void changeStatus(archive, 'archived')}>确认归档</button></dialog>
   </section></main>
+}
+
+function WorksGrid({ assets, versions, onOpen }: { assets: AssetRecord[]; versions: AssetLibraryProps['versions']; onOpen: (asset: AssetRecord) => void }) {
+  const models = assets.filter(asset => asset.asset_type === 'model_glb')
+  const images = assets.filter(asset => asset.asset_type === 'image')
+  const cards = models.map(model => ({ model, image: images.find(image => model.source_asset_ids.includes(image.asset_id)) }))
+  if (!cards.length) return <div className="works-empty panel-card"><h2>还没有三维作品</h2><p>在工作台生成二维方案后，可以继续生成三维作品。</p></div>
+  return <section aria-label="三维作品" className="works-grid">{cards.map(({ model, image }) => {
+    const version = versions.find(item => item.id === model.version_id)
+    return <article className="work-card panel-card" key={model.asset_id} aria-label={model.title}>
+      <button className="work-card-preview" onClick={() => onOpen(model)} aria-label={`查看${model.title}`}>
+        {image?.url ? <img src={assetDownloadUrl(image.url)} alt={`${model.title}二维预览`} /> : <div className="work-card-placeholder">3D</div>}
+        <span className="work-card-badge">三维模型</span>
+      </button>
+      <div className="work-card-body"><h2>{model.title.replace(/\s*(model_glb|三维模型)\s*$/i, '') || '未命名作品'}</h2><p>{version?.label ?? '未关联版本'} · {model.material_status === 'pbr' ? '材质已加载' : '概念模型'}</p><div className="work-card-actions"><button onClick={() => onOpen(model)}>查看详情</button>{assetDownloadUrl(model.url) && <a href={assetDownloadUrl(model.url)} download>下载 GLB</a>}</div></div>
+    </article>
+  })}</section>
 }
 
 type CultureDraft = Pick<CulturalReference, 'statement' | 'source_title' | 'source_url' | 'note'> & { verified_at: string }

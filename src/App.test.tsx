@@ -24,10 +24,8 @@ describe('App', () => {
     expect(screen.getByText('园林一隅')).toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/服装|面料|领口/)
     await userEvent.click(screen.getByRole('button', { name: '工作台' }))
-    expect(screen.getAllByText('桌面香插').length).toBeGreaterThan(0)
-    expect(screen.getByText('已确认')).toBeInTheDocument()
-    expect(screen.getByText('设计假设')).toBeInTheDocument()
-    expect(screen.getByText('待验证')).toBeInTheDocument()
+    expect(screen.getByText('寻找设计参考')).toBeInTheDocument()
+    expect(screen.queryByText('待验证')).not.toBeInTheDocument()
   })
 
   it('shows a recoverable offline state', async () => {
@@ -59,7 +57,7 @@ describe('App', () => {
       .mockResolvedValueOnce(response({ ...workspaceWithVersion, turns: [turn] }))
       .mockResolvedValueOnce(response(completedJob))
       .mockResolvedValueOnce(response({ ...workspaceWithVersion, turns: [turn], jobs: [completedJob] }))
-    vi.stubGlobal('fetch', (url: string, init?: RequestInit) => url.endsWith('/projects') ? Promise.resolve(response([])) : fetchMock(url, init))
+    vi.stubGlobal('fetch', (url: string, init?: RequestInit) => url.includes('/resources?') ? Promise.resolve(response({ resources: [], warning: '' })) : url.endsWith('/projects') ? Promise.resolve(response([])) : fetchMock(url, init))
     render(<App />)
     await userEvent.click(screen.getByRole('button', { name: '工作台' }))
     await screen.findByText('V1')
@@ -67,10 +65,11 @@ describe('App', () => {
     await userEvent.type(screen.getByLabelText('描述或修改设计'), '生成一版更轻的方案')
     await userEvent.click(screen.getByRole('button', { name: '发送设计想法' }))
 
-    await userEvent.click(await screen.findByRole('button', { name: '确认并生成' }))
+    await userEvent.click(await screen.findByRole('button', { name: '生成二维' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5))
     const imageRequest = fetchMock.mock.calls[3][1] as RequestInit
     expect(JSON.parse(String(imageRequest.body))).toEqual({
+      resource_ids: [],
       source_turn_id: 'turn_generate',
       base_version_id: 'version_v1',
       changes: { visual_weight: 'lighter' },
@@ -105,7 +104,7 @@ describe('App', () => {
       .mockResolvedValueOnce(response({ ...initial, turns: [turn] }))
       .mockResolvedValueOnce(response(completed))
       .mockResolvedValueOnce(response(finalWorkspace))
-    vi.stubGlobal('fetch', (url: string, init?: RequestInit) => url.endsWith('/projects') ? Promise.resolve(response([])) : fetchMock(url, init))
+    vi.stubGlobal('fetch', (url: string, init?: RequestInit) => url.includes('/resources?') ? Promise.resolve(response({ resources: [], warning: '' })) : url.endsWith('/projects') ? Promise.resolve(response([])) : fetchMock(url, init))
     render(<App />)
     await userEvent.click(screen.getByRole('button', { name: '工作台' }))
     await screen.findByText('V1')
@@ -113,6 +112,7 @@ describe('App', () => {
     await userEvent.type(screen.getByLabelText('描述或修改设计'), '确认修改并生成新版')
     await userEvent.click(screen.getByRole('button', { name: '发送设计想法' }))
 
+    await userEvent.click(await screen.findByRole('button', { name: '生成二维' }))
     await waitFor(() => expect(screen.getByText('V2').closest('button')).toHaveClass('active'))
     expect(screen.getByRole('button', { name: '锁定为候选版本' })).toBeEnabled()
   })

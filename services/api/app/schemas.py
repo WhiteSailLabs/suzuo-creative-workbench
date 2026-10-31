@@ -163,6 +163,7 @@ class DesignVersion(BaseModel):
 
 
 class GenerationJob(BaseModel):
+    design_resources: list[dict[str, Any]] = Field(default_factory=list)
     changes: dict[str, Any] = Field(default_factory=dict)
     preserve: list[str] = Field(default_factory=list)
     id: str
@@ -198,6 +199,7 @@ class StageGateContext(BaseModel):
 
 
 class ImageJobCreate(BaseModel):
+    resource_ids: list[str] = Field(default_factory=list, max_length=12)
     changes: dict[str, Any] = Field(default_factory=dict)
     preserve: list[str] = Field(default_factory=list)
     source_turn_id: Optional[str] = None

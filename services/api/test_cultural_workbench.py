@@ -128,6 +128,26 @@ class CulturalWorkbenchApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "文创项目不存在")
 
+    def test_first_turn_on_natural_language_project_creates_initial_direction(self):
+        fresh = store.create_project({
+            "name": "语音创建的苏州香插",
+            "product_type": "桌面香插",
+        })
+        project_id = fresh["project"]["id"]
+
+        response = self.client.post(
+            f"/api/workbench/projects/{project_id}/turns",
+            json={"text": "我想做一个现代的苏州园林漏景香插，保留框景和留白"},
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["intent"], "DISCUSS")
+        workspace = store.workspaces[project_id]
+        self.assertEqual(len(workspace["directions"]), 1)
+        self.assertEqual(workspace["active_direction_id"], workspace["directions"][0]["id"])
+        self.assertEqual(workspace["project"]["active_direction_id"], workspace["directions"][0]["id"])
+        self.assertIn("漏景", workspace["directions"][0]["name"])
+
     def test_initial_idea_creates_restatement_and_brief_revision(self):
         response = self.client.post(
             "/api/workbench/projects/prj_suzhou_incense/turns",
@@ -429,6 +449,26 @@ class CulturalWorkbenchApiTests(unittest.TestCase):
         asset = self.client.get(asset_url)
         self.assertEqual(asset.status_code, 200)
         self.assertGreater(len(asset.content), 100)
+
+    def test_first_image_generation_accepts_brief_preserve_without_modify_gate(self):
+        """Brief constraints on V1 are not evidence of an existing image edit."""
+        turn = self.client.post(
+            "/api/workbench/projects/prj_suzhou_incense/turns",
+            json={"text": "生成吧"},
+        ).json()
+
+        with patch("app.main.run_workbench_image_job", new=AsyncMock()):
+            submitted = self.client.post(
+                "/api/workbench/projects/prj_suzhou_incense/image-jobs",
+                json={
+                    "source_turn_id": turn["id"],
+                    "preserve": ["面向年轻用户", "现代化表达"],
+                },
+            )
+
+        self.assertEqual(submitted.status_code, 202, submitted.json())
+        self.assertIsNone(submitted.json()["base_version_id"])
+        self.assertEqual(submitted.json()["preserve"], ["面向年轻用户", "现代化表达"])
 
     def test_existing_concept_image_can_be_imported_as_version(self):
         png = b"\x89PNG\r\n\x1a\n" + b"verified-image-bytes"

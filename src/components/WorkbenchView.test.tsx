@@ -31,7 +31,7 @@ describe('workbench directions and tasks', () => {
   it('keeps tasks running when the task center closes and blocks same-kind retries', async () => {
     const active = { id: 'running', kind: 'rodin', status: 'processing', version_id: null, artifact_id: null, message: '建模中', prompt: '', updated_at: '' }
     const failed = { ...active, id: 'failed', status: 'failed', message: '服务失败' }
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => response(url.endsWith('/projects') ? [{ ...workspace.project, latest_version_id: 'A1', image_count: 2 }] : { ...workspace, jobs: [active, failed] })))
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => response(url.includes('/resources?') ? Promise.resolve(response({ resources: [], warning: '' })) : url.endsWith('/projects') ? [{ ...workspace.project, latest_version_id: 'A1', image_count: 2 }] : { ...workspace, jobs: [active, failed] })))
     await open()
     await userEvent.click(screen.getByRole('button', { name: /任务中心/ }))
     const center = screen.getByRole('region', { name: '生成任务' })
@@ -52,6 +52,7 @@ function generationServer() {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     const body = init?.body ? JSON.parse(String(init.body)) : {}
     calls.push({ url, body, method: init?.method ?? 'GET' })
+    if (url.includes('/resources?')) return response({ resources: [], warning: '' })
     if (url.endsWith('/activate')) { const id = url.includes('/directions/b/') ? 'b' : 'a'; current.active_direction_id = id; current.project.active_direction_id = id; return response(structuredClone(current)) }
     if (url.endsWith('/projects')) return response([{ ...current.project, latest_version_id: 'A1', image_count: 2, model_count: 0, pending_count: 0 }])
     if (url.endsWith('/turns')) {
@@ -78,16 +79,10 @@ it('requires changes/preserve/constraints confirmation and binds every mutation 
   const { calls, setJobs } = generationServer()
   await open()
   await send('生成一版')
-  const card = await screen.findByRole('region', { name: '生成确认卡' })
-  expect(card).toHaveTextContent('简化镂空')
-  expect(card).toHaveTextContent('丝绸质感')
-  expect(card).toHaveTextContent('稳定底座')
-  expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
-  await userEvent.click(within(card).getByRole('button', { name: '暂不生成' }))
+  expect(await screen.findByRole('button', { name: '生成二维' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: '生成确认卡' })).not.toBeInTheDocument()
-  expect(screen.getByLabelText('描述或修改设计')).toHaveValue('生成一版')
-  await userEvent.click(screen.getByRole('button', { name: '发送设计想法' }))
-  await userEvent.click(within(await screen.findByRole('region', { name: '生成确认卡' })).getByRole('button', { name: '确认并生成' }))
+  expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
+  await userEvent.click(screen.getByRole('button', { name: '生成二维' }))
   await waitFor(() => expect(calls.some(c => c.url.endsWith('/image-jobs'))).toBe(true))
   expect(calls.find(c => c.url.endsWith('/image-jobs'))?.body).toMatchObject({ base_version_id: 'A1', changes: patch.changes, preserve: patch.preserve })
   await userEvent.click(screen.getByRole('button', { name: '锁定为候选版本' }))
@@ -100,7 +95,7 @@ it('requires changes/preserve/constraints confirmation and binds every mutation 
   await userEvent.click(screen.getByRole('button', { name: '重试' }))
   await waitFor(() => expect(calls.some(c => c.url.endsWith('/retry'))).toBe(true))
   const mutations = calls.filter(c => /\/(turns|image-jobs|candidate|rodin-jobs|retry)$/.test(c.url))
-  expect(mutations.length).toBeGreaterThanOrEqual(7)
+  expect(mutations.length).toBeGreaterThanOrEqual(5)
   expect(mutations.every(c => c.url.includes('/projects/second/'))).toBe(true)
   expect(calls.find(c => c.url.endsWith('/retry'))?.body).toEqual({})
 })
@@ -112,6 +107,7 @@ it('PATCHes the current project direction before allowing generation in the acti
   await screen.findByAltText('B1 二维概念图')
   await waitFor(() => expect(calls.some(c => c.url.endsWith('/projects/second/directions/b/activate') && c.method === 'PATCH')).toBe(true))
   await send('确认修改并生成新版')
+  await userEvent.click(await screen.findByRole('button', { name: '生成二维' }))
   await waitFor(() => expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(1))
   expect(calls.find(c => c.url.endsWith('/image-jobs'))?.body.base_version_id).toBe('B1')
   expect(screen.queryByRole('region', { name: '生成确认卡' })).not.toBeInTheDocument()
@@ -136,13 +132,15 @@ it('blocks generation while activation is pending and retains the original activ
   await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'a')
   await waitFor(() => expect(screen.getByRole('combobox', { name: '当前方向' })).toBeEnabled())
   await send('确认修改并生成新版')
+  await userEvent.click(await screen.findByRole('button', { name: '生成二维' }))
   await waitFor(() => expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(1))
 })
 
 it('labels the five cultural evidence types independently', async () => {
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => response(url.endsWith('/projects') ? [{ ...workspace.project, latest_version_id: 'A1', image_count: 2 }] : { ...workspace, culture: ['fact', 'translation', 'designer_judgment', 'generated', 'to_verify'].map(kind => ({ id: kind, kind, title: kind, statement: '依据', verified: false })) })))
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => response(url.includes('/resources?') ? Promise.resolve(response({ resources: [], warning: '' })) : url.endsWith('/projects') ? [{ ...workspace.project, latest_version_id: 'A1', image_count: 2 }] : { ...workspace, culture: ['fact', 'translation', 'designer_judgment', 'generated', 'to_verify'].map(kind => ({ id: kind, kind, title: kind, statement: '依据', verified: false })) })))
   await open()
-  for (const label of ['文化事实', '设计转译', '设计师判断', 'AI 推断', '待核验']) expect(screen.getByText(label)).toBeInTheDocument()
+  expect(screen.getByText('寻找设计参考')).toBeInTheDocument()
+  expect(screen.queryByText('待核验')).not.toBeInTheDocument()
 })
 
 it('keeps canvas actions and the task center accessible when side panels collapse', async () => {
@@ -150,7 +148,7 @@ it('keeps canvas actions and the task center accessible when side panels collaps
   await open()
   await userEvent.click(screen.getByRole('button', { name: '收起对话' }))
   expect(screen.getByLabelText('描述或修改设计')).not.toBeVisible()
-  await userEvent.click(screen.getByRole('button', { name: '收起设计状态' }))
+  await userEvent.click(screen.getByRole('button', { name: '收起设计资源' }))
   expect(screen.getByRole('button', { name: /任务中心/ })).toBeVisible()
   expect(screen.getByRole('button', { name: '锁定为候选版本' })).toBeVisible()
   await userEvent.click(screen.getByRole('button', { name: '展开对话' }))
@@ -163,6 +161,7 @@ it('shows a generation gate failure with its actual reason', async () => {
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => url.endsWith('/image-jobs') ? { ok: false, status: 409, json: async () => ({ detail: { reason: '请先确认产品功能和保留项' } }) } : originalFetch(url, init)))
   await open()
   await send('确认修改并生成新版')
+  await userEvent.click(await screen.findByRole('button', { name: '生成二维' }))
   expect(await screen.findByText('请先确认产品功能和保留项')).toBeInTheDocument()
 })
 

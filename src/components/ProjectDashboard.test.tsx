@@ -16,7 +16,7 @@ beforeEach(() => mockedCreateProject.mockReset())
 
 const projects: ProjectSummary[] = ['苏州园林 · 漏景香插', '苏州丝绸 · 桌面收纳盒', '昆曲水袖 · 桌面灯'].map((name, index) => ({
   id: `prj_${index}`, name, product_type: ['香插', '收纳盒', '桌面灯'][index], stage: 'concepting', stage_status: 'awaiting_confirmation', owner: '', collaborators: [], target_user: '', use_scene: '', brief_revision: 1, active_direction_id: null, candidate_version_id: null,
-  created_at: '2026-10-31T00:00:00Z', updated_at: '2026-10-31T01:00:00Z', latest_version_id: 'v3', latest_version_label: 'A-V3', image_count: 3, model_count: 1, pending_count: 2,
+  created_at: '2026-10-31T00:00:00Z', updated_at: '2026-10-31T01:00:00Z', latest_version_id: 'v3', latest_version_label: 'A-V3', current_direction_name: '漏景方向', culture_count: 4, image_count: 3, model_count: 1, pending_count: 2, latest_action: '完成二维概念',
 }))
 
 describe('ProjectDashboard', () => {
@@ -68,7 +68,10 @@ describe('ProjectDashboard', () => {
       expect(within(card).getByText(project.product_type)).toBeInTheDocument()
       expect(within(card).getByText('二维概念')).toBeInTheDocument()
       expect(within(card).getByText('A-V3')).toBeInTheDocument()
-      expect(within(card).getByText('二维 3 · 三维 1')).toBeInTheDocument()
+      expect(within(card).getByText('二维 3 · 三维 1 · 文化 4')).toBeInTheDocument()
+      expect(within(card).getByText(/文化 4/)).toBeInTheDocument()
+      expect(within(card).getByText('漏景方向')).toBeInTheDocument()
+      expect(within(card).getByText('最近动作：完成二维概念')).toBeInTheDocument()
       expect(within(card).getByText('待处理 2')).toBeInTheDocument()
       expect(card.querySelector('time')).toHaveAttribute('dateTime', '2026-10-31T01:00:00Z')
     }

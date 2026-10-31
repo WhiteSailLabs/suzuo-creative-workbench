@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { DesignCanvas } from './DesignCanvas'
-import type { AssetRecord, DesignDirection, DesignVersion, GenerationJob } from '../types/workbench'
+import type { DesignVersion, GenerationJob } from '../types/workbench'
 
 vi.mock('./ModelViewer', () => ({
   ModelViewer: () => <div data-testid="model-viewer">3D viewer</div>,
@@ -19,9 +19,6 @@ const version: DesignVersion = {
   ],
 }
 
-const sourceDirection: DesignDirection = { id: 'dir_a', name: '漏景', concept: '', status: 'draft', culture_ids: ['culture'], material_ids: [], created_at: '', updated_at: '' }
-const sourceAsset: AssetRecord = { asset_id: 'image_1', asset_type: 'image', project_id: 'project', direction_id: 'dir_a', version_id: version.id, title: '', status: 'draft', source_asset_ids: [], source_turn_id: null, source_culture_ids: ['culture'], tags: [], created_at: '', updated_at: '', owner: '', rights_note: '', url: '', media_type: '', material_status: null, role: null }
-
 describe('DesignCanvas', () => {
   it('shows image, 3D concept disclaimer, and version changes', async () => {
     render(<DesignCanvas versions={[version]} jobs={[]} selectedVersionId="version_v2" candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} />)
@@ -32,7 +29,7 @@ describe('DesignCanvas', () => {
     expect(screen.getByText('概念模型，不是生产 CAD')).toBeInTheDocument()
     expect(screen.getByText('由二维图生成')).toBeInTheDocument()
     expect(screen.getByText('1 张参考图')).toBeInTheDocument()
-    expect(screen.getByText('待一致性检查')).toBeInTheDocument()
+    expect(screen.getByText('基于二维 V2')).toBeInTheDocument()
   })
 
   it('opens a version detail drawer with parent, prompt, changes, and artifacts', async () => {
@@ -111,7 +108,7 @@ describe('DesignCanvas', () => {
   it('directs first generation through conversation instead of an independent button', () => {
     render(<DesignCanvas versions={[]} jobs={[]} selectedVersionId={null} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} />)
 
-    expect(screen.getByText('在左侧对话中说“生成一版”')).toBeInTheDocument()
+    expect(screen.getByText('在左侧描述想法，AI 会自动寻找参考')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '生成第一版二维概念' })).not.toBeInTheDocument()
   })
 
@@ -143,54 +140,12 @@ describe('DesignCanvas', () => {
   })
 })
 
-it('offers all four modes, a 2d return, comparison changes and source relations', async () => {
-  const v1 = { ...version, id: 'version_v1', label: 'V1', parent_version_id: null, artifacts: [version.artifacts[0]] }
-  const v2 = { ...version, artifacts: [version.artifacts[0]] }
-  render(<DesignCanvas versions={[v1, v2]} jobs={[]} selectedVersionId={v2.id} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} />)
+it('only offers 2D and 3D while retaining version navigation', async () => {
+  render(<DesignCanvas versions={[version]} jobs={[]} selectedVersionId={version.id} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} />)
+  expect(screen.queryByRole('button', { name: '版本对比' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '来源关系' })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '三维模型' }))
-  expect(screen.getByText('先锁定这个二维版本为候选')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: '返回二维' }))
+  expect(screen.getByText('基于二维 V2')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '二维概念' }))
   expect(screen.getByAltText('V2 二维概念图')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: '版本对比' }))
-  expect(screen.getByRole('combobox', { name: '对比左侧版本' })).toHaveValue(v1.id)
-  expect(screen.getByRole('combobox', { name: '对比右侧版本' })).toHaveValue(v2.id)
-  expect(screen.getByRole('region', { name: '版本对比结果' })).toHaveTextContent('变化')
-  expect(screen.getByRole('region', { name: '版本对比结果' })).toHaveTextContent('leak_view')
-  await userEvent.click(screen.getByRole('button', { name: '来源关系' }))
-  expect(screen.getByRole('region', { name: '来源链' })).toHaveTextContent('Brief 第 2 版')
-  expect(screen.getByRole('region', { name: '来源链' })).toHaveTextContent('turn_2')
-  expect(screen.getByRole('region', { name: '来源链' })).toHaveTextContent('version_v1')
-})
-
-it('traces culture and input assets through a version to jobs and proposals', async () => {
-  render(<DesignCanvas versions={[version]} jobs={[{ id: 'job_source', kind: 'image', status: 'completed', version_id: version.id, artifact_id: 'image_1', prompt: '', message: '完成', updated_at: '' }]} selectedVersionId={version.id} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} assets={[sourceAsset]} direction={sourceDirection} culture={[{ id: 'culture', kind: 'translation', title: '漏景来源', statement: '', source_title: '', source_url: '', note: '', verified: true }]} proposals={[{ id: 'proposal_1', version_id: version.id }]} />)
-  await userEvent.click(screen.getByRole('button', { name: '来源关系' }))
-  const chain = screen.getByRole('region', { name: '来源链' })
-  expect(chain).toHaveTextContent('漏景来源')
-  expect(chain).toHaveTextContent('job_source')
-  expect(chain).toHaveTextContent('proposal_1')
-})
-
-
-it('only attributes explicitly recorded culture from this version and direction', async () => {
-  const culture = [
-    { id: 'culture', kind: 'fact' as const, title: '历史漏景事实', statement: '', source_title: '', source_url: '', note: '', verified: true },
-    { id: 'later', kind: 'translation' as const, title: '后增未关联资料', statement: '', source_title: '', source_url: '', note: '', verified: true },
-    { id: 'other', kind: 'fact' as const, title: '其他方向文化', statement: '', source_title: '', source_url: '', note: '', verified: true },
-  ]
-  const props = { versions: [version], jobs: [], selectedVersionId: version.id, candidateVersionId: null, onSelectVersion: vi.fn(), onLockCandidate: vi.fn(), culture, direction: { ...sourceDirection, culture_ids: ['culture', 'later'] } }
-  const { rerender } = render(<DesignCanvas {...props} assets={[{ ...sourceAsset, source_culture_ids: ['culture', 'other'] }]} />)
-  await userEvent.click(screen.getByRole('button', { name: '来源关系' }))
-  const chain = screen.getByRole('region', { name: '来源链' })
-  expect(chain).toHaveTextContent('历史漏景事实')
-  expect(chain).not.toHaveTextContent('后增未关联资料')
-  expect(chain).not.toHaveTextContent('其他方向文化')
-  expect(chain).toHaveTextContent('文化事实')
-  rerender(<DesignCanvas {...props} assets={[{ ...sourceAsset, source_culture_ids: [] }]} />)
-  expect(chain).toHaveTextContent('未记录文化来源')
-  expect(chain).not.toHaveTextContent('历史漏景事实')
-  rerender(<DesignCanvas {...props} assets={[{ ...sourceAsset, version_id: 'different_version' }]} />)
-  expect(chain).toHaveTextContent('未记录文化来源')
-  rerender(<DesignCanvas {...props} assets={[sourceAsset]} direction={undefined} />)
-  expect(chain).toHaveTextContent('未记录文化来源')
 })

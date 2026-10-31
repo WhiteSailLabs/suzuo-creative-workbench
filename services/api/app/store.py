@@ -138,6 +138,29 @@ class MemoryStore:
         workspace["project"].update(active_direction_id=direction["id"], updated_at=now)
         return direction
 
+    def ensure_initial_direction(self, project_id: str, idea: str = "") -> dict[str, Any]:
+        """Create the first editable direction lazily when a new project receives its first idea."""
+        workspace = self.workspaces[project_id]
+        active_id = workspace.get("active_direction_id") or workspace["project"].get("active_direction_id")
+        if active_id:
+            existing = next((item for item in workspace["directions"] if item["id"] == active_id), None)
+            if existing is not None:
+                return existing
+        if workspace["directions"]:
+            return self.activate_direction(project_id, workspace["directions"][0]["id"])["directions"][0]
+
+        text = (idea or "").strip()
+        cue_patterns = (
+            ("漏景", ("漏景", "园林")),
+            ("框景", ("框景",)),
+            ("丝绸", ("丝绸",)),
+            ("水袖", ("水袖",)),
+        )
+        cue = next((name for name, tokens in cue_patterns if any(token in text for token in tokens)), None)
+        name = f"{cue}方向" if cue else (workspace["project"].get("product_type") or "初始方向")
+        concept = text or f"围绕{workspace['project'].get('product_type') or '文创产品'}继续探索"
+        return self.create_direction(project_id, {"name": name, "concept": concept})
+
     def activate_direction(self, project_id: str, direction_id: str) -> dict[str, Any]:
         """Validate ownership before synchronously changing either active field."""
         workspace = self.workspaces[project_id]
@@ -511,13 +534,14 @@ class MemoryStore:
         )
         change = turn.get("change_patch", {}) if turn else {}
         return (
-            "现代苏州文创桌面香插产品概念图，克制、安静、可实际放置线香；"
+            f"苏州文创产品概念图，产品类型：{workspace['project'].get('product_type', '')}；"
+            f"用户本轮原始需求：{turn.get('text', '') if turn else ''}；"
             f"设计 Brief：{json.dumps(brief['confirmed'], ensure_ascii=False)}；"
-            f"文化转译：{'；'.join(translations)}；"
+            
             f"本轮变化：{json.dumps(change.get('changes', {}), ensure_ascii=False)}；"
             f"必须保留：{json.dumps(change.get('preserve', []), ensure_ascii=False)}；"
             f"结构约束：{json.dumps(change.get('constraints', []), ensure_ascii=False)}；"
-            "纯色背景，产品设计渲染，展示稳定底座、镂空层次与香烟路径，不使用文字和旅游纪念品式符号。"
+            "纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。"
         )
 
     def validate_generation_submission(self, project_id, kind, payload):
@@ -530,8 +554,16 @@ class MemoryStore:
                        "input_mode": payload.get("input_mode") or "image"}
         else:
             source = self._change_source_turn(workspace, payload.get("source_turn_id"))
-            modifying = (payload.get("base_version_id") or payload.get("changes") or payload.get("preserve")
-                         or (source and source.get("intent") == "MODIFY"))
+            # A project without any image version cannot be an edit yet. The
+            # interpreter may carry Brief invariants in `preserve` for V1;
+            # those belong to the initial generation instead of the modify
+            # gate, which requires a real base version.
+            modifying = bool(workspace["versions"]) and (
+                payload.get("base_version_id")
+                or payload.get("changes")
+                or payload.get("preserve")
+                or (source and source.get("intent") == "MODIFY")
+            )
             action = "modify_image" if modifying else "generate_image"
             patch = source.get("change_patch", {}) if source else {}
             context = {"version_id": payload.get("base_version_id"),
@@ -598,7 +630,7 @@ class MemoryStore:
         return job
 
     def complete_image_job(
-        self, job_id: str, artifact: dict[str, Any]
+        self, job_id: str, artifact: dict[str, Any], reference_artifacts: list[dict[str, Any]] | None = None
     ) -> dict[str, Any]:
         workspace, job = self._job_location(job_id)
         if job.get("artifact_id"):
@@ -628,7 +660,7 @@ class MemoryStore:
             "changed_fields": deepcopy(job.get("changes") or change.get("changes", {})),
             "preserved_fields": list(job.get("preserve") or change.get("preserve", [])),
             "constraints": list(change.get("constraints", [])),
-            "artifacts": [deepcopy(artifact)],
+            "artifacts": [deepcopy(artifact), *(deepcopy(reference_artifacts or []))],
             "status": "draft",
             "created_at": now_iso(),
         }
@@ -642,6 +674,9 @@ class MemoryStore:
             updated_at=now_iso(),
         )
         registered = self._upsert_asset(workspace, version, artifact, job)
+        if "design_resources" in job:
+            registered["source_culture_ids"] = [r["id"].removeprefix("culture:") for r in job["design_resources"] if r["id"].startswith("culture:")]
+
         if artifact.get("kind") == "model_glb":
             saved = next(a for a in version["artifacts"] if a["id"] == artifact["id"])
             saved.update(role=registered["role"], material_status=registered["material_status"])
@@ -696,6 +731,7 @@ class MemoryStore:
                 "preserve": list(job.get("preserve", [])),
             },
         )
+        retried["design_resources"] = deepcopy(job.get("design_resources", []))
         retried["direction_id"] = job.get("direction_id")
         return retried
 
@@ -797,6 +833,7 @@ class MemoryStore:
                 item["artifact_id"] for item in reference_snapshot
             ],
             "reference_snapshot": reference_snapshot,
+            "design_resources": deepcopy(next((j.get("design_resources", []) for j in workspace["jobs"] if j.get("kind") == "image" and j.get("version_id") == version["id"]), [])),
             "consistency_status": (
                 "pending" if input_mode == "image" else "not_applicable"
             ),

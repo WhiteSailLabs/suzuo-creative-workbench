@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import asyncio
 import secrets
 from pathlib import Path
 from typing import Any, Optional, Literal
@@ -10,6 +11,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from .resources import search_resources, registry, resource_prompt
 from .config import settings
 from .intent import TextInterpretationProvider, interpret_turn_with_provider
 from .providers.image import OpenAICompatibleImageProvider
@@ -77,11 +79,11 @@ async def run_workbench_image_job(job_id: str) -> None:
                 ),
                 None,
             )
-        result = (
-            await image_provider.edit(job["prompt"], source_image)
-            if source_image
-            else await image_provider.generate(job["prompt"])
-        )
+        visual_references = [str(Path(__file__).resolve().parents[3] / "public" / r["image_url"].lstrip("/")) if r["image_url"].startswith("/assets/") else r["image_url"] for r in job.get("design_resources", []) if r.get("image_url")]
+        if visual_references:
+            result = await image_provider.with_references(job["prompt"], ([source_image] if source_image else []) + visual_references)
+        else:
+            result = await image_provider.edit(job["prompt"], source_image) if source_image else await image_provider.generate(job["prompt"])
         images = image_provider.normalize_images(result)
         if not images:
             store.fail_generation_job(job_id, "图片服务没有返回有效图片")
@@ -90,6 +92,33 @@ async def run_workbench_image_job(job_id: str) -> None:
         saved = await image_provider.save_image(
             images[0], Path(settings.image_output_dir), artifact_id
         )
+        # Keep the presentation image separate from a small, consistent set of
+        # modelling views. Generate the views concurrently so one slow edit
+        # does not serialize the entire three-project demo batch.
+        view_specs = (
+            ("front", "same product, straight front orthographic product view, preserve exact silhouette and proportions"),
+            ("side", "same product, straight side orthographic product view, preserve exact height width and depth"),
+            ("back", "same product, straight back orthographic product view, preserve exact structure and material"),
+            ("top", "same product, straight top orthographic product view, preserve exact opening and part layout"),
+        )
+        async def make_view(view_label: str, view_prompt: str) -> dict[str, Any]:
+            view_result = await asyncio.wait_for(image_provider.edit(
+                f"{job['prompt']}\nCreate a clean modelling reference view: {view_prompt}. No text, no props, plain light background.",
+                saved["path"],
+            ), timeout=150)
+            view_images = image_provider.normalize_images(view_result)
+            if not view_images:
+                raise ValueError(f"没有返回 {view_label} 建模参考图")
+            view_id = f"artifact_image_{secrets.token_hex(5)}"
+            view_saved = await image_provider.save_image(view_images[0], Path(settings.image_output_dir), view_id)
+            return {
+                "id": view_id,
+                "kind": "image",
+                "url": f"/api/workbench/assets/{view_id}",
+                "view_label": view_label,
+                **view_saved,
+            }
+        reference_artifacts = await asyncio.gather(*(make_view(label, prompt) for label, prompt in view_specs))
         store.complete_image_job(
             job_id,
             {
@@ -98,6 +127,7 @@ async def run_workbench_image_job(job_id: str) -> None:
                 "url": f"/api/workbench/assets/{artifact_id}",
                 **saved,
             },
+            reference_artifacts=reference_artifacts,
         )
     except Exception as exc:
         store.fail_generation_job(job_id, f"图片生成失败：{exc}")
@@ -263,6 +293,8 @@ async def create_workbench_turn(
     workspace = store.workspace_for_project(project_id)
     if workspace is None:
         raise HTTPException(404, "文创项目不存在")
+    store.ensure_initial_direction(project_id, payload.text)
+    workspace = store.workspace_for_project(project_id) or workspace
     interpreted = (
         await interpret_turn_with_provider(payload.text, workspace, text_interpreter)
     ).model_dump()
@@ -319,6 +351,14 @@ async def patch_workbench_culture(
     return item
 
 
+@app.get("/api/workbench/projects/{project_id}/resources")
+async def find_design_resources(project_id: str, q: str = ""):
+    workspace = store.workspace_for_project(project_id)
+    if workspace is None:
+        raise HTTPException(404, "文创项目不存在")
+    return await search_resources(workspace, q[:200])
+
+
 @app.post(
     "/api/workbench/projects/{project_id}/image-jobs",
     response_model=GenerationJob,
@@ -331,7 +371,19 @@ async def create_workbench_image_job(
         raise HTTPException(404, "文创项目不存在")
     try:
         store.validate_generation_submission(project_id, "image", payload.model_dump())
-        job = store.create_image_job(project_id, payload.model_dump())
+        data = payload.model_dump()
+        local = {"culture:" + c["id"]: c for c in store.workspace_for_project(project_id).get("culture", [])}
+        selected = []
+        for resource_id in payload.resource_ids:
+            if resource_id.startswith("culture:") and resource_id not in local:
+                raise ValueError("资源不属于当前项目")
+            if resource_id not in registry:
+                raise ValueError("参考资源已失效，请重新搜索")
+            selected.append(dict(registry[resource_id]))
+        job = store.create_image_job(project_id, data)
+        job["design_resources"] = selected
+        if selected:
+            job["prompt"] += "\n" + resource_prompt(selected)
     except StageGateConflict as exc:
         raise HTTPException(409, exc.detail) from exc
     except GenerationConflict as exc:

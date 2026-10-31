@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { AppView, ProjectSummary, Workspace } from '../types/workbench'
 import { ProductTour } from './ProductTour'
 
-const navigation: Array<[AppView, string]> = [['projects', '项目'], ['workbench', '工作台'], ['works', '作品'], ['assets', '资产'], ['reviews', '版本评审'], ['proposal', '提案']]
+const navigation: Array<[AppView, string]> = [['projects', '项目'], ['workbench', '工作台'], ['assets', '资产']]
 export function AppShell({ view, onNavigate, projects, projectId, project, onSelectProject, offline, children }: {
   view: AppView; onNavigate: (view: AppView) => void; projects: ProjectSummary[]; projectId: string
   project?: Workspace['project']; onSelectProject: (id: string) => void; offline: boolean; children: ReactNode

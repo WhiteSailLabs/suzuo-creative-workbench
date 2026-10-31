@@ -39,7 +39,7 @@ export type ProjectState = {
 }
 export type ProjectSummary = ProjectState & {
   latest_version_id: string | null; latest_version_label: string | null
-  image_count: number; model_count: number; pending_count: number
+  current_direction_name?: string | null; culture_count?: number; image_count: number; model_count: number; pending_count: number; latest_action?: string | null
 }
 export type ProjectCreate = { name: string; product_type?: string; owner?: string; collaborators?: string[]; target_user?: string; use_scene?: string }
 export type DesignDirection = { id: string; name: string; concept: string; status: 'draft' | 'reviewing' | 'selected' | 'archived'; culture_ids: string[]; material_ids: string[]; created_at: string; updated_at: string }

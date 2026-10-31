@@ -32,7 +32,7 @@ export function createDirection(projectId: string, payload: DirectionCreate) { r
 export function activateDirection(projectId: string, directionId: string) { return request<Workspace>(`${projectPath(projectId)}/directions/${encodeURIComponent(directionId)}/activate`, { method: 'PATCH' }) }
 export function createTurn(text: string, projectId: string, correctedTurnId?: string) { return request<ConversationTurn>(`${projectPath(projectId)}/turns`, post({ text, corrected_turn_id: correctedTurnId })) }
 export function assetUrl(artifactId: string) { return `${API_BASE_URL}/api/workbench/assets/${encodeURIComponent(artifactId)}` }
-export function createImageJob(sourceTurnId: string | undefined, baseVersionId: string | undefined, projectId: string, context?: Pick<StageGateContext, 'changes' | 'preserve'>) { return request<GenerationJob>(`${projectPath(projectId)}/image-jobs`, post({ source_turn_id: sourceTurnId, base_version_id: baseVersionId, ...context })) }
+export function createImageJob(sourceTurnId: string | undefined, baseVersionId: string | undefined, projectId: string, context?: Pick<StageGateContext, 'changes' | 'preserve'>, resourceIds: string[] = []) { return request<GenerationJob>(`${projectPath(projectId)}/image-jobs`, post({ source_turn_id: sourceTurnId, base_version_id: baseVersionId, resource_ids: resourceIds, ...context })) }
 export function createRodinJob(versionId: string, projectId: string, inputMode: 'image' | 'text' = 'image') { return request<GenerationJob>(`${projectPath(projectId)}/rodin-jobs`, post({ version_id: versionId, input_mode: inputMode })) }
 export function getJob(jobId: string, projectId: string) { return request<GenerationJob>(`${projectPath(projectId)}/jobs/${encodeURIComponent(jobId)}`) }
 export function retryJob(jobId: string, projectId: string) { return request<GenerationJob>(`${projectPath(projectId)}/jobs/${encodeURIComponent(jobId)}/retry`, post()) }
@@ -53,3 +53,6 @@ export function assetDownloadUrl(url: string) {
   if (url.startsWith('/')) return `${API_BASE_URL}${url}`
   return /^(https?:|data:|blob:)/i.test(url) ? url : ''
 }
+
+export type DesignResource = { id: string; title: string; description: string; image_url: string; source_url: string; source: string; license: string; agent_reason?: string; design_translation?: string }
+export function searchResources(projectId: string, query: string) { return request<{ resources: DesignResource[]; warning: string }>(`${projectPath(projectId)}/resources?q=${encodeURIComponent(query)}`) }
