@@ -1,149 +1,194 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
-
-
-class ClientCreate(BaseModel):
-    name: str
-    subtitle: str = ""
-    industry: str = "服装设计"
-    accent: str = "#5B6BFF"
+from pydantic import BaseModel, Field, model_validator
 
 
-class ClientOut(ClientCreate):
-    model_config = ConfigDict(from_attributes=True)
+WorkbenchStage = Literal[
+    "capturing", "grounding", "concepting", "prototyping",
+    "reviewing", "presenting", "archived",
+]
+StageStatus = Literal["active", "awaiting_confirmation", "blocked", "done"]
+CultureKind = Literal["fact", "translation", "generated", "to_verify"]
+JobStatus = Literal["submitted", "processing", "completed", "failed", "stale"]
+
+
+class ProjectState(BaseModel):
     id: str
-    created_at: str
-    active_project_id: str | None = None
-    project_count: int = 0
-
-
-class ProjectCreate(BaseModel):
     name: str
-    brief: str = ""
-    status: Literal["active", "archived"] = "active"
-
-
-class ProjectOut(ProjectCreate):
-    id: str
-    client_id: str
+    product_type: str
+    stage: WorkbenchStage
+    stage_status: StageStatus
+    active_direction_id: Optional[str] = None
+    owner: str = ""
+    collaborators: list[str] = Field(default_factory=list)
+    target_user: str = ""
+    use_scene: str = ""
+    brief_revision: int = 0
+    candidate_version_id: Optional[str] = None
     created_at: str
     updated_at: str
-    current_revision: int = 0
 
 
-class MaterialOut(BaseModel):
+class DesignDirection(BaseModel):
     id: str
     name: str
-    category: str
-    color: str
-    texture_url: str
-    source: str
-    license: str
-    verified: bool = True
-    tags: list[str] = Field(default_factory=list)
-
-
-class ReferenceOut(BaseModel):
-    id: str
-    title: str
-    source_url: str
-    thumbnail_url: str
-    license_status: str = "待确认"
-    purpose: str = "参考"
-
-
-class ReferenceImportRequest(BaseModel):
-    id: str | None = None
-    title: str
-    source_url: str
-    thumbnail_url: str = ""
-    license_status: str = "待确认"
-    purpose: str = "参考"
-
-
-class WorkflowNode(BaseModel):
-    id: str
-    type: str
-    label: str
-    status: Literal["ready", "queued", "running", "completed", "stale", "failed"] = "ready"
-    depends_on: list[str] = Field(default_factory=list)
-    editable_fields: list[str] = Field(default_factory=list)
-    prompt: str = ""
-    parameters: dict[str, Any] = Field(default_factory=dict)
-    references: list[str] = Field(default_factory=list)
+    concept: str = ""
+    status: Literal["draft", "reviewing", "selected", "archived"] = "draft"
+    culture_ids: list[str] = Field(default_factory=list)
     material_ids: list[str] = Field(default_factory=list)
-    output_artifact_id: str | None = None
-
-
-class WorkflowOut(BaseModel):
-    id: str
-    project_id: str
-    name: str
-    source_repo: str
-    source_license: str
-    revision: int
-    nodes: list[WorkflowNode]
-
-
-class WorkflowRunRequest(BaseModel):
-    node_id: str = "image_generate"
-    mode: Literal["generate", "edit"] = "edit"
-    prompt: str = ""
-    references: list[str] = Field(default_factory=list)
-    material_ids: list[str] = Field(default_factory=list)
-    source_artifact_id: str | None = None
-    edit_artifact_id: str | None = None
-    idempotency_key: str | None = None
-    attempt: int = Field(default=1, ge=1, le=5)
-    parameters: dict[str, Any] = Field(default_factory=dict)
-
-
-class WorkflowRunOut(BaseModel):
-    id: str
-    project_id: str
-    node_id: str
-    status: Literal["queued", "running", "completed", "failed"]
-    revision: int
-    artifact_id: str | None = None
-    message: str = ""
-    phase: str | None = None
-    attempt: int = 1
-    source_artifact_id: str | None = None
-    error_code: str | None = None
-
-
-class NodeRevisionRequest(BaseModel):
-    prompt: str | None = None
-    parameters: dict[str, Any] | None = None
-    references: list[str] | None = None
-    material_ids: list[str] | None = None
-
-
-class ArtifactOut(BaseModel):
-    id: str
-    project_id: str
-    node_id: str
-    version: int
-    status: str
-    image_url: str
-    prompt: str
-    references: list[str] = Field(default_factory=list)
-    materials: list[str] = Field(default_factory=list)
     created_at: str
-    object_key: str | None = None
-    parent_artifact_id: str | None = None
+    updated_at: str
 
 
-class SearchRequest(BaseModel):
-    query: str
-    kind: Literal["reference", "material", "all"] = "all"
+class BriefRevision(BaseModel):
+    revision: int
+    confirmed: dict[str, Any] = Field(default_factory=dict)
+    assumptions: dict[str, Any] = Field(default_factory=dict)
+    conflicts: list[dict[str, Any]] = Field(default_factory=list)
+    missing: list[str] = Field(default_factory=list)
+    source_turn_id: Optional[str] = None
+    created_at: str
 
 
-class SearchOut(BaseModel):
-    query: str
-    provider: str
-    results: list[ReferenceOut] = Field(default_factory=list)
+class CulturalReference(BaseModel):
+    id: str
+    kind: CultureKind
+    title: str
+    statement: str
+    source_title: str = ""
+    source_url: str = ""
+    note: str = ""
+    verified: bool = False
 
+
+class CulturalReferenceCreate(BaseModel):
+    kind: CultureKind
+    title: str = Field(min_length=1, max_length=200)
+    statement: str = Field(min_length=1, max_length=2000)
+    source_title: str = ""
+    source_url: str = ""
+    note: str = ""
+    verified: bool = False
+
+    @model_validator(mode="after")
+    def fact_has_source(self):
+        if self.kind == "fact" and not self.source_title.strip():
+            raise ValueError("文化事实必须提供来源标题")
+        return self
+
+
+class CulturalReferencePatch(BaseModel):
+    kind: Optional[CultureKind] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    statement: Optional[str] = Field(default=None, min_length=1, max_length=2000)
+    source_title: Optional[str] = None
+    source_url: Optional[str] = None
+    note: Optional[str] = None
+    verified: Optional[bool] = None
+
+
+class DesignVersion(BaseModel):
+    id: str
+    direction_id: Optional[str] = None
+    label: str
+    parent_version_id: Optional[str] = None
+    brief_revision: int
+    source_turn_id: Optional[str] = None
+    change_source_turn_id: Optional[str] = None
+    changed_fields: dict[str, Any] = Field(default_factory=dict)
+    preserved_fields: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    status: Literal["draft", "reviewing", "selected", "archived", "discarded"] = "draft"
+    created_at: str
+
+
+class GenerationJob(BaseModel):
+    id: str
+    direction_id: Optional[str] = None
+    kind: Literal["image", "rodin"]
+    status: JobStatus
+    version_id: Optional[str] = None
+    artifact_id: Optional[str] = None
+    message: str = ""
+    prompt: str = ""
+    brief_revision: int = 0
+    source_turn_id: Optional[str] = None
+    change_source_turn_id: Optional[str] = None
+    base_version_id: Optional[str] = None
+    attempt: int = 1
+    retry_of: Optional[str] = None
+    input_mode: Optional[Literal["image", "text"]] = None
+    reference_artifact_ids: list[str] = Field(default_factory=list)
+    reference_snapshot: list[dict[str, Any]] = Field(default_factory=list)
+    consistency_status: Optional[
+        Literal["pending", "passed", "failed", "not_applicable"]
+    ] = None
+    created_at: str
+    updated_at: str
+
+
+class ImageJobCreate(BaseModel):
+    source_turn_id: Optional[str] = None
+    base_version_id: Optional[str] = None
+    prompt: str = ""
+
+
+class ImageImportCreate(BaseModel):
+    data_url: str = Field(min_length=24, max_length=20_000_000)
+    source_turn_id: Optional[str] = None
+    base_version_id: Optional[str] = None
+
+
+class RodinJobCreate(BaseModel):
+    version_id: str
+    prompt: str = ""
+    input_mode: Literal["image", "text"] = "image"
+
+
+class StageGate(BaseModel):
+    stage: WorkbenchStage
+    status: StageStatus
+    reason: str = ""
+    updated_at: str
+
+
+class WorkspaceOut(BaseModel):
+    project: ProjectState
+    active_direction_id: Optional[str] = None
+    directions: list[DesignDirection] = Field(default_factory=list)
+    assets: list[dict[str, Any]] = Field(default_factory=list)
+    reviews: list[dict[str, Any]] = Field(default_factory=list)
+    proposals: list[dict[str, Any]] = Field(default_factory=list)
+    brief_revisions: list[BriefRevision] = Field(default_factory=list)
+    culture: list[CulturalReference] = Field(default_factory=list)
+    turns: list[dict[str, Any]] = Field(default_factory=list)
+    versions: list[DesignVersion] = Field(default_factory=list)
+    jobs: list[GenerationJob] = Field(default_factory=list)
+    stage_gates: list[StageGate] = Field(default_factory=list)
+
+
+class ChangePatch(BaseModel):
+    changes: dict[str, Any] = Field(default_factory=dict)
+    preserve: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+
+
+class ConversationTurnCreate(BaseModel):
+    text: str = Field(min_length=1, max_length=5000)
+    corrected_turn_id: Optional[str] = None
+
+
+class InterpretedTurn(BaseModel):
+    id: str
+    text: str
+    intent: Literal["DISCUSS", "GENERATE", "MODIFY", "CONFIRM", "EXPORT"]
+    restatement: str
+    change_patch: ChangePatch = Field(default_factory=ChangePatch)
+    brief_patch: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    brief_revision: int
+    interpreter_mode: Literal["provider", "fallback"] = "fallback"
+    correction_of: Optional[str] = None
+    created_at: str

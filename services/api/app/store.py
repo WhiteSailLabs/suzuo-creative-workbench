@@ -1,30 +1,18 @@
 from __future__ import annotations
 
-import asyncio
 import base64
-import hashlib
 import html
-import io
 import json
-import mimetypes
-import os
 import secrets
-import textwrap
-from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
-
-MATERIAL_PREVIEW_FILES = {
-    "mat_fabric_081c": "fabric081c-preview.png",
-    "mat_fabric_085": "fabric085-preview.png",
-    "mat_fabric_082a": "fabric082a-preview.png",
-    "mat_fabric_083": "fabric083-preview.png",
-    "mat_fabric_080": "fabric080-preview.png",
-}
-
-MATERIALS_DIR = Path(__file__).resolve().parents[3] / "data" / "materials"
+from .cultural_workbench import (
+    append_brief_revision,
+    create_seed_workspaces,
+    transition_stage,
+)
 
 
 def now_iso() -> str:
@@ -38,387 +26,611 @@ def new_id(prefix: str) -> str:
 def svg_data_url(title: str, subtitle: str, hue: str, revision: int = 1) -> str:
     safe_title = html.escape(title)
     safe_subtitle = html.escape(subtitle)
-    svg = f"""<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1500' viewBox='0 0 1200 1500'>
-      <defs>
-        <linearGradient id='bg' x1='0' x2='1' y1='0' y2='1'><stop stop-color='#f4f0eb'/><stop offset='1' stop-color='#e7e4ee'/></linearGradient>
-        <linearGradient id='coat' x1='0' x2='1'><stop stop-color='{hue}' stop-opacity='.92'/><stop offset='1' stop-color='#c6b2a4' stop-opacity='.96'/></linearGradient>
-        <filter id='shadow'><feDropShadow dx='0' dy='18' stdDeviation='22' flood-color='#222' flood-opacity='.14'/></filter>
-      </defs>
-      <rect width='1200' height='1500' fill='url(#bg)'/>
-      <circle cx='1030' cy='150' r='180' fill='#fff' opacity='.42'/>
-      <path d='M430 205 L770 205 L890 430 L820 1370 L380 1370 L310 430 Z' fill='url(#coat)' filter='url(#shadow)'/>
-      <path d='M430 205 L600 440 L770 205' fill='none' stroke='#6c5f67' stroke-width='18' opacity='.54'/>
-      <path d='M600 440 L600 1370' stroke='#5b4d56' stroke-width='10' opacity='.36'/>
-      <path d='M378 720 L822 720' stroke='#6f5c5f' stroke-width='7' opacity='.25'/>
-      <path d='M412 890 L788 890' stroke='#6f5c5f' stroke-width='7' opacity='.25'/>
-      <text x='70' y='120' font-family='Arial, sans-serif' font-size='32' fill='#2d3037' letter-spacing='4'>HUICHUANG AI / REVISION {revision}</text>
-      <text x='70' y='1400' font-family='Arial, sans-serif' font-size='42' fill='#24262c'>{safe_title}</text>
-      <text x='70' y='1450' font-family='Arial, sans-serif' font-size='24' fill='#656a73'>{safe_subtitle}</text>
+    svg = f"""<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='1280' viewBox='0 0 1024 1280'>
+      <defs><linearGradient id='bg' x1='0' x2='1' y1='0' y2='1'><stop stop-color='#f3efe6'/><stop offset='1' stop-color='#dce5dd'/></linearGradient></defs>
+      <rect width='1024' height='1280' fill='url(#bg)'/>
+      <path d='M322 290 Q512 105 702 290 L702 900 Q512 1000 322 900 Z' fill='{hue}' opacity='.86'/>
+      <path d='M406 350 Q512 235 618 350 L618 740 Q512 820 406 740 Z' fill='#e9eee7'/>
+      <path d='M512 220 L512 540' stroke='#7c6656' stroke-width='8'/>
+      <circle cx='512' cy='218' r='12' fill='#a34836'/>
+      <text x='64' y='1080' font-family='sans-serif' font-size='38' fill='#2f3d38'>{safe_title}</text>
+      <text x='64' y='1132' font-family='sans-serif' font-size='22' fill='#69766f'>{safe_subtitle}</text>
+      <text x='64' y='1190' font-family='sans-serif' font-size='16' fill='#8d958f'>SUZUO CONCEPT / V{revision}</text>
     </svg>"""
     encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
     return f"data:image/svg+xml;base64,{encoded}"
 
 
 class MemoryStore:
-    """Small evented store used when PostgreSQL/Redis are not available.
-
-    The API surface mirrors the PostgreSQL schema in schema.sql, so the demo can
-    be swapped to a real repository without changing the frontend contract.
-    """
+    """Single-user in-memory store for the cultural-creative MVP."""
 
     backend = "memory"
 
     def __init__(self) -> None:
-        self.clients: dict[str, dict[str, Any]] = {}
-        self.projects: dict[str, dict[str, Any]] = {}
-        self.materials: dict[str, dict[str, Any]] = {}
-        self.references: dict[str, dict[str, Any]] = {}
-        self.workflows: dict[str, dict[str, Any]] = {}
-        self.artifacts: dict[str, dict[str, Any]] = {}
-        self.runs: dict[str, dict[str, Any]] = {}
-        self.events: dict[str, list[dict[str, Any]]] = defaultdict(list)
-        self.subscribers: dict[str, set[asyncio.Queue[dict[str, Any]]]] = defaultdict(set)
-        self._seed()
+        self.workspaces: dict[str, dict[str, Any]] = create_seed_workspaces()
 
-    def _seed(self) -> None:
-        for item in [
-            {"id": "cli_suzhou", "name": "苏州织造研究所", "subtitle": "丝绸与现代通勤系列", "industry": "服装设计", "accent": "#5B6BFF"},
-            {"id": "cli_orbit", "name": "Orbit Atelier", "subtitle": "SS27 城市机能系列", "industry": "服装设计", "accent": "#D97B57"},
-        ]:
-            self.clients[item["id"]] = {**item, "created_at": now_iso()}
-        materials = [
-            ("mat_fabric_081c", "Cotton Weave 081C · 柔和中性", "棉质织物", "#c6c1b5", "https://github.com/MorePET/mat-vis", ["cotton", "woven", "soft"]),
-            ("mat_fabric_085", "Fine Woven 085 · 西装质感", "细密织物", "#d5c8b4", "https://github.com/MorePET/mat-vis", ["woven", "matte", "suiting"]),
-            ("mat_fabric_082a", "Textured Cloth 082A · 轻纹理", "织物", "#b8b9b4", "https://github.com/MorePET/mat-vis", ["woven", "texture", "light"]),
-            ("mat_fabric_083", "Textured Cloth 083 · 低饱和", "织物", "#8f918b", "https://github.com/MorePET/mat-vis", ["woven", "texture", "matte"]),
-            ("mat_fabric_080", "Fine Knit 080 · 柔软弹性", "针织", "#c1b9ab", "https://github.com/MorePET/mat-vis", ["knit", "soft", "stretch"]),
+    def list_projects(self) -> list[dict[str, Any]]:
+        """Return project cards derived from each project's own workspace."""
+        cards = []
+        for workspace in self.workspaces.values():
+            versions = workspace["versions"]
+            latest = versions[-1] if versions else None
+            artifacts = [artifact for version in versions for artifact in version["artifacts"]]
+            pending = sum(job["status"] in {"submitted", "processing", "failed", "stale"}
+                          for job in workspace["jobs"])
+            pending += sum(version["status"] in {"draft", "reviewing"} for version in versions)
+            pending += sum(entry["kind"] == "to_verify" or
+                           (entry["kind"] == "fact" and not entry.get("verified"))
+                           for entry in workspace["culture"])
+            cards.append({
+                **deepcopy(workspace["project"]),
+                "latest_version_id": latest["id"] if latest else None,
+                "latest_version_label": latest["label"] if latest else None,
+                "image_count": sum(item.get("kind") == "image" for item in artifacts),
+                "model_count": sum(item.get("kind") == "model_glb" for item in artifacts),
+                "pending_count": pending,
+            })
+        return cards
+
+    def create_project(self, payload: dict[str, Any]) -> dict[str, Any]:
+        name = payload.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("项目名称不能为空")
+        now = now_iso()
+        project = {
+            "id": new_id("prj"), "name": name.strip(),
+            "product_type": payload.get("product_type") or "",
+            "owner": payload.get("owner") or "",
+            "collaborators": deepcopy(payload.get("collaborators") or []),
+            "target_user": payload.get("target_user") or "",
+            "use_scene": payload.get("use_scene") or "",
+            "stage": "capturing", "stage_status": "active",
+            "active_direction_id": None, "candidate_version_id": None,
+            "brief_revision": 0, "created_at": now, "updated_at": now,
+        }
+        workspace = {
+            "project": project, "active_direction_id": None,
+            "directions": [], "culture": [], "assets": [], "reviews": [],
+            "proposals": [], "turns": [], "versions": [], "jobs": [],
+            "brief_revisions": [{
+                "revision": 0, "confirmed": {}, "assumptions": {},
+                "conflicts": [], "missing": [], "source_turn_id": None,
+                "created_at": now,
+            }],
+            "stage_gates": [{"stage": "capturing", "status": "active",
+                             "reason": "等待用户表达第一轮设计意图", "updated_at": now}],
+        }
+        self.workspaces[project["id"]] = workspace
+        return workspace
+
+    def create_direction(self, project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        workspace = self.workspaces[project_id]
+        name = payload.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("方向名称不能为空")
+        now = now_iso()
+        direction = {
+            "id": new_id("direction"), "name": name.strip(),
+            "concept": payload.get("concept") or "", "status": "draft",
+            "culture_ids": deepcopy(payload.get("culture_ids") or []),
+            "material_ids": deepcopy(payload.get("material_ids") or []),
+            "created_at": now, "updated_at": now,
+        }
+        workspace["directions"].append(direction)
+        workspace["active_direction_id"] = direction["id"]
+        workspace["project"].update(active_direction_id=direction["id"], updated_at=now)
+        return direction
+
+    def workspace_for_project(self, project_id: str) -> dict[str, Any] | None:
+        return self.workspaces.get(project_id)
+
+    def record_turn(self, project_id: str, turn: dict[str, Any]) -> dict[str, Any]:
+        workspace = self.workspaces[project_id]
+        brief_patch = turn.get("brief_patch") or {}
+        revision = append_brief_revision(
+            workspace,
+            confirmed=brief_patch.get("confirmed") or {},
+            assumptions=brief_patch.get("assumptions") or {},
+            source_turn_id=turn["id"],
+        )
+        recorded = deepcopy(turn)
+        recorded["brief_revision"] = revision["revision"]
+        workspace["turns"].append(recorded)
+        return recorded
+
+    def create_cultural_reference(
+        self, project_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        item = {"id": new_id("culture"), **deepcopy(payload)}
+        self.workspaces[project_id]["culture"].append(item)
+        return item
+
+    def patch_cultural_reference(
+        self, project_id: str, reference_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        workspace = self.workspaces[project_id]
+        item = next(
+            (entry for entry in workspace["culture"] if entry["id"] == reference_id),
+            None,
+        )
+        if item is None:
+            return None
+        candidate = {
+            **item,
+            **{key: value for key, value in payload.items() if value is not None},
+        }
+        if candidate["kind"] == "fact" and not candidate.get("source_title", "").strip():
+            raise ValueError("文化事实必须提供来源标题")
+        item.update(candidate)
+        return item
+
+    def customer_safe_culture(self, project_id: str) -> list[dict[str, Any]]:
+        return [
+            deepcopy(item)
+            for item in self.workspaces[project_id]["culture"]
+            if item["kind"] == "translation"
+            or (
+                item["kind"] == "fact"
+                and item.get("verified") is True
+                and bool(item.get("source_title", "").strip())
+            )
         ]
-        for mid, name, category, color, source, tags in materials:
-            self.materials[mid] = {
-                "id": mid,
-                "name": name,
-                "category": category,
-                "color": color,
-                "texture_url": f"/api/materials/{mid}/preview",
-                "source": source,
-                "license": "CC0-1.0",
-                "verified": True,
-                "tags": tags,
-            }
-        refs = [
-            ("ref_collar_arch", "弧形领口 / Architecture", "https://www.pinterest.com/", "领口结构"),
-            ("ref_suzhou_window", "苏式窗棂 / Geometry", "https://commons.wikimedia.org/", "纹样比例"),
-            ("ref_soft_tailoring", "Soft tailoring / 线条", "https://unsplash.com/", "整体廓形"),
-            ("ref_ink_palette", "墨色与米白 / Palette", "https://www.behance.net/", "配色方向"),
-        ]
-        for rid, title, source_url, purpose in refs:
-            self.references[rid] = {
-                "id": rid,
-                "title": title,
-                "source_url": source_url,
-                "thumbnail_url": f"/api/references/{rid}/preview.svg",
-                "license_status": "待确认",
-                "purpose": purpose,
-            }
-        project = self.create_project("cli_suzhou", {"name": "新中式通勤外套 · SS26", "brief": "米白色、宽松、新中式、轻量通勤外套", "status": "active"}, project_id="prj_suzhou_ss26")
-        self._seed_workflow(project["id"])
-        self._seed_artifact(project["id"])
-        self.create_project("cli_orbit", {"name": "城市机能风样衣 · SS27", "brief": "轻量、防风、可收纳的都市外套", "status": "active"}, project_id="prj_orbit_ss27")
 
-    def _seed_workflow(self, project_id: str) -> None:
-        wid = f"wf_{project_id}"
-        self.workflows[wid] = {
-            "id": wid,
-            "project_id": project_id,
-            "name": "服装概念生成 · 可编辑工作流",
-            "source_repo": "https://github.com/Comfy-Org/workflow_templates",
-            "source_license": "MIT",
-            "revision": 3,
-            "nodes": [
-                {"id": "brief", "type": "brief", "label": "需求 Brief", "status": "completed", "depends_on": [], "editable_fields": ["prompt", "parameters"], "prompt": "米白色、宽松、新中式、轻量通勤外套", "parameters": {"language": "zh-CN"}, "references": [], "material_ids": []},
-                {"id": "material_resolve", "type": "material_resolve", "label": "面料匹配", "status": "completed", "depends_on": ["brief"], "editable_fields": ["prompt", "parameters", "material_ids"], "prompt": "从已验证 CC0 面料库匹配米白与低饱和织纹", "parameters": {"top_k": 4}, "references": [], "material_ids": ["mat_fabric_081c", "mat_fabric_085"]},
-                {"id": "reference_bind", "type": "reference_bind", "label": "参考图绑定", "status": "completed", "depends_on": ["brief"], "editable_fields": ["references", "parameters"], "prompt": "绑定领口结构与苏式比例参考", "parameters": {"roles": {"ref_collar_arch": "领口", "ref_suzhou_window": "比例"}}, "references": ["ref_collar_arch", "ref_suzhou_window"], "material_ids": []},
-                {"id": "prompt_compose", "type": "prompt_compose", "label": "提示词编排", "status": "completed", "depends_on": ["brief", "material_resolve", "reference_bind"], "editable_fields": ["prompt", "parameters", "references"], "prompt": "新中式通勤外套，克制的苏式线条，留白，柔和自然光，服装产品摄影", "parameters": {"aspect_ratio": "4:5", "quality": "high", "preserve": ["color", "fit", "length"]}, "references": ["ref_collar_arch", "ref_suzhou_window"], "material_ids": ["mat_fabric_081c"]},
-                {"id": "image_generate", "type": "image_generate", "label": "生成 V1", "status": "completed", "depends_on": ["prompt_compose"], "editable_fields": ["prompt", "parameters", "references", "material_ids"], "prompt": "米白色宽松新中式通勤外套，柔和棉质织纹，弧形领口，克制苏式线条，产品摄影", "parameters": {"model": "gpt-image-2", "size": "1024x1280", "quality": "high", "n": 1}, "references": ["ref_collar_arch"], "material_ids": ["mat_fabric_081c"], "output_artifact_id": "art_suzhou_v1"},
-                {"id": "image_edit", "type": "image_edit", "label": "定向修改 V2", "status": "ready", "depends_on": ["image_generate", "reference_bind"], "editable_fields": ["prompt", "parameters", "references", "material_ids"], "prompt": "领口再小一点，其他不要改；保持米白色、宽松版型、衣长和无腰带", "parameters": {"model": "gpt-image-2", "size": "1024x1280", "quality": "high", "preserve": ["color", "fit", "length", "belt"]}, "references": ["ref_collar_arch"], "material_ids": ["mat_fabric_081c"]},
-                {"id": "quality_check", "type": "quality_check", "label": "约束质量检查", "status": "ready", "depends_on": ["image_generate", "image_edit"], "editable_fields": ["parameters"], "prompt": "检查颜色、版型、衣长、领口和面料是否符合已确认要求", "parameters": {"checks": ["color", "fit", "length", "collar", "material"], "threshold": 0.85, "fail_action": "block_artifact"}, "references": [], "material_ids": []},
-                {"id": "artifact", "type": "artifact_store", "label": "版本与交付", "status": "ready", "depends_on": ["quality_check"], "editable_fields": ["parameters"], "prompt": "输出设计概念稿、素材来源和版本说明", "parameters": {"format": "zip"}, "references": [], "material_ids": []},
-            ],
-        }
-
-    def _seed_artifact(self, project_id: str) -> None:
-        artifact_id = "art_suzhou_v1"
-        self.artifacts[artifact_id] = {
-            "id": artifact_id,
-            "project_id": project_id,
-            "node_id": "image_generate",
-            "version": 1,
-            "status": "published",
-            "object_key": f"projects/{project_id}/artifacts/{artifact_id}.png",
-            "image_url": svg_data_url("设计初稿 V1", "真丝斜纹 · 苏式通勤外套", "#ded2be", 1),
-            "prompt": "米白色宽松新中式通勤外套，柔和棉质织纹，弧形领口，克制苏式线条，产品摄影",
-            "references": ["ref_suzhou_window"],
-            "materials": ["mat_fabric_081c"],
-            "parent_artifact_id": None,
-            "created_at": now_iso(),
-        }
-
-    def create_project(self, client_id: str, payload: dict[str, Any], project_id: str | None = None) -> dict[str, Any]:
-        pid = project_id or new_id("prj")
-        project = {"id": pid, "client_id": client_id, **payload, "created_at": now_iso(), "updated_at": now_iso(), "current_revision": 0}
-        self.projects[pid] = project
-        self.clients[client_id]["active_project_id"] = pid
-        return project
-
-    def create_client(self, payload: dict[str, Any]) -> dict[str, Any]:
-        cid = f"cli_{len(self.clients) + 1:03d}"
-        client = {"id": cid, **payload, "created_at": now_iso()}
-        self.clients[cid] = client
-        return client
-
-    def confirm_reference(self, payload: dict[str, Any]) -> dict[str, Any]:
-        rid = payload.get("id") or new_id("ref")
-        reference = {
-            "id": rid,
-            "title": payload["title"],
-            "source_url": payload.get("source_url", ""),
-            "thumbnail_url": payload.get("thumbnail_url", ""),
-            "license_status": payload.get("license_status", "待确认"),
-            "purpose": payload.get("purpose", "参考"),
-        }
-        self.references[rid] = reference
-        return reference
-
-    def client_out(self, client: dict[str, Any]) -> dict[str, Any]:
-        projects = [p for p in self.projects.values() if p["client_id"] == client["id"]]
-        return {**client, "active_project_id": client.get("active_project_id") or (projects[0]["id"] if projects else None), "project_count": len(projects)}
-
-    def workflow_for_project(self, project_id: str) -> dict[str, Any]:
-        for workflow in self.workflows.values():
-            if workflow["project_id"] == project_id:
-                return workflow
-        return self._create_default_workflow(project_id)
-
-    def _create_default_workflow(self, project_id: str) -> dict[str, Any]:
-        self._seed_workflow(project_id)
-        return self.workflow_for_project(project_id)
-
-    def add_event(self, project_id: str, event: dict[str, Any]) -> None:
-        payload = {"id": new_id("evt"), "project_id": project_id, "created_at": now_iso(), **event}
-        self.events[project_id].append(payload)
-        for queue in list(self.subscribers[project_id]):
-            try:
-                queue.put_nowait(payload)
-            except asyncio.QueueFull:
-                pass
-
-    async def subscribe(self, project_id: str):
-        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=50)
-        self.subscribers[project_id].add(queue)
-        try:
-            for event in self.events[project_id][-8:]:
-                yield event
-            while True:
-                yield await queue.get()
-        finally:
-            self.subscribers[project_id].discard(queue)
-
-    def search_materials(self, query: str) -> list[dict[str, Any]]:
-        q = query.lower().strip()
-        if not q:
-            return list(self.materials.values())
-        return [m for m in self.materials.values() if q in (m["name"] + " " + m["category"] + " " + " ".join(m["tags"])).lower()]
-
-    def create_run(self, project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-        project = self.projects[project_id]
-        workflow = self.workflow_for_project(project_id)
-        node_id = payload.get("node_id", "image_generate")
-        node = next((item for item in workflow["nodes"] if item["id"] == node_id), None)
-        if node is None:
-            raise ValueError(f"工作流节点不存在：{node_id}")
-        idempotency_key = payload.get("idempotency_key")
-        if idempotency_key:
-            previous = next((item for item in self.runs.values() if item["project_id"] == project_id and item.get("idempotency_key") == idempotency_key), None)
-            if previous:
-                previous["_idempotent_replay"] = True
-                return previous
-        rid = new_id("run")
-        project["current_revision"] += 1
-        source_artifact_id = payload.get("source_artifact_id") or payload.get("edit_artifact_id")
-        mode = payload.get("mode") or ("edit" if node_id == "image_edit" else "generate")
-        if mode == "edit" and not source_artifact_id:
-            raise ValueError("图片编辑必须指定 source_artifact_id")
-        run = {
-            "id": rid,
-            "project_id": project_id,
-            "node_id": node_id,
-            "mode": mode,
-            "status": "queued",
-            "phase": "queued",
-            "revision": project["current_revision"],
-            "artifact_id": None,
-            "source_artifact_id": source_artifact_id,
-            "attempt": payload.get("attempt", 1),
-            "error_code": None,
-            "message": "已加入生成队列",
-            **payload,
-        }
-        self.runs[rid] = run
-        affected: set[str] = {node_id}
-        changed = True
-        while changed:
-            changed = False
-            for candidate in workflow["nodes"]:
-                if candidate["id"] in affected:
-                    continue
-                if any(dep in affected for dep in candidate.get("depends_on", [])):
-                    affected.add(candidate["id"])
-                    changed = True
-        for node in workflow["nodes"]:
-            if node["id"] == run["node_id"]:
-                node["status"] = "queued"
-            elif node["id"] in affected:
-                node["status"] = "stale"
-        self.add_event(project_id, {"type": "node.queued", "run_id": rid, "node_id": run["node_id"], "message": "节点已排队"})
-        self.add_event(project_id, {"type": "run.phase", "run_id": rid, "node_id": node_id, "phase": "queued", "message": "工作流已排队"})
-        return run
+    def _job_location(self, job_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+        for workspace in self.workspaces.values():
+            job = next(
+                (item for item in workspace["jobs"] if item["id"] == job_id), None
+            )
+            if job is not None:
+                return workspace, job
+        raise KeyError(job_id)
 
     @staticmethod
-    def _first_image(result: dict[str, Any] | None) -> str | None:
-        if not result:
-            return None
-        images = result.get("images")
-        if isinstance(images, list) and images:
-            return images[0] if isinstance(images[0], str) else None
-        data = result.get("data")
-        if isinstance(data, list) and data:
-            item = data[0] or {}
-            if item.get("url"):
-                return item["url"]
-            if item.get("b64_json"):
-                return "data:image/png;base64," + item["b64_json"]
+    def _has_change_patch(turn: dict[str, Any] | None) -> bool:
+        if not turn:
+            return False
+        patch = turn.get("change_patch") or {}
+        return bool(
+            patch.get("changes") or patch.get("preserve") or patch.get("constraints")
+        )
+
+    @staticmethod
+    def _is_confirmed_generation_turn(turn: dict[str, Any] | None) -> bool:
+        if not turn:
+            return False
+        text = str(turn.get("text", ""))
+        return any(
+            token in text for token in ("确认", "确定", "就按这个", "可以")
+        ) and any(token in text for token in ("生成", "出一版", "新版"))
+
+    def _change_source_turn(
+        self, workspace: dict[str, Any], source_turn_id: str | None
+    ) -> dict[str, Any] | None:
+        turns = workspace["turns"]
+        source_index = next(
+            (index for index, item in enumerate(turns) if item["id"] == source_turn_id),
+            len(turns),
+        )
+        source = turns[source_index] if source_index < len(turns) else None
+        if self._is_confirmed_generation_turn(source):
+            for turn in reversed(turns[:source_index]):
+                if turn.get("intent") == "GENERATE":
+                    break
+                if turn.get("intent") == "MODIFY" and self._has_change_patch(turn):
+                    return turn
+        if self._has_change_patch(source):
+            return source
+        for turn in reversed(turns[:source_index]):
+            if turn.get("intent") == "GENERATE":
+                break
+            if turn.get("intent") == "MODIFY" and self._has_change_patch(turn):
+                return turn
         return None
 
-    async def complete_run(self, run_id: str, provider: Any | None = None, storage: Any | None = None) -> dict[str, Any]:
-        run = self.runs[run_id]
-        if run["status"] == "completed":
-            return run
-        run["status"] = "running"
+    def _compose_image_prompt(
+        self,
+        workspace: dict[str, Any],
+        source_turn_id: str | None,
+        change_source_turn_id: str | None = None,
+    ) -> str:
+        brief = workspace["brief_revisions"][-1]
+        translations = [
+            item["statement"]
+            for item in workspace["culture"]
+            if item["kind"] == "translation"
+        ]
+        turn = next(
+            (
+                item
+                for item in workspace["turns"]
+                if item["id"] == (change_source_turn_id or source_turn_id)
+            ),
+            None,
+        )
+        change = turn.get("change_patch", {}) if turn else {}
+        return (
+            "现代苏州文创桌面香插产品概念图，克制、安静、可实际放置线香；"
+            f"设计 Brief：{json.dumps(brief['confirmed'], ensure_ascii=False)}；"
+            f"文化转译：{'；'.join(translations)}；"
+            f"本轮变化：{json.dumps(change.get('changes', {}), ensure_ascii=False)}；"
+            f"必须保留：{json.dumps(change.get('preserve', []), ensure_ascii=False)}；"
+            f"结构约束：{json.dumps(change.get('constraints', []), ensure_ascii=False)}；"
+            "纯色背景，产品设计渲染，展示稳定底座、镂空层次与香烟路径，不使用文字和旅游纪念品式符号。"
+        )
 
-        def phase(name: str, message: str) -> None:
-            run["phase"] = name
-            run["message"] = message
-            self.add_event(run["project_id"], {"type": "run.phase", "run_id": run_id, "node_id": run["node_id"], "phase": name, "message": message})
+    def create_image_job(
+        self, project_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        workspace = self.workspaces[project_id]
+        now = now_iso()
+        source_turn_id = payload.get("source_turn_id")
+        change_source_turn = self._change_source_turn(workspace, source_turn_id)
+        change_source_turn_id = (
+            change_source_turn["id"] if change_source_turn else None
+        )
+        job = {
+            "id": new_id("job_image"),
+            "kind": "image",
+            "direction_id": workspace["project"].get("active_direction_id"),
+            "status": "submitted",
+            "version_id": None,
+            "artifact_id": None,
+            "message": "图片任务已提交",
+            "prompt": payload.get("prompt")
+            or self._compose_image_prompt(
+                workspace, source_turn_id, change_source_turn_id
+            ),
+            "brief_revision": workspace["brief_revisions"][-1]["revision"],
+            "source_turn_id": source_turn_id,
+            "change_source_turn_id": change_source_turn_id,
+            "base_version_id": payload.get("base_version_id"),
+            "attempt": int(payload.get("attempt", 1)),
+            "retry_of": payload.get("retry_of"),
+            "created_at": now,
+            "updated_at": now,
+        }
+        if job["base_version_id"] and not any(
+            version["id"] == job["base_version_id"]
+            for version in workspace["versions"]
+        ):
+            raise ValueError("基础设计版本不存在")
+        workspace["jobs"].append(job)
+        transition_stage(
+            workspace,
+            "concepting",
+            status="active",
+            reason="正在把本轮对话转成二维概念",
+        )
+        return job
 
-        phase("input_locked", "已锁定本次输入与版本")
-        self.add_event(run["project_id"], {"type": "node.running", "run_id": run_id, "node_id": run["node_id"], "message": "开始执行图片生成流"})
-        prompt = run.get("prompt") or "米白色新中式通勤外套，保持简洁、克制、可穿着"
-        parameters = run.get("parameters") or {}
-        provider_result: dict[str, Any] | None = None
-        source: dict[str, Any] | None = None
-        try:
-            phase("material_resolved", f"已锁定 {len(run.get('material_ids', []))} 个面料素材")
-            phase("references_bound", f"已绑定 {len(run.get('references', []))} 张参考图")
-            phase("prompt_composed", "已将修改意图编排为可执行提示词")
-            if provider is not None:
-                phase("provider.requested", "正在请求图片 Provider")
-                if run["node_id"] == "image_edit" or run.get("mode") == "edit":
-                    source_id = run.get("source_artifact_id") or run.get("edit_artifact_id")
-                    if not source_id:
-                        run["error_code"] = "source_missing"
-                        raise ValueError("图片编辑缺少 source_artifact_id")
-                    source = self.artifacts.get(source_id)
-                    if source is None or source.get("project_id") != run["project_id"]:
-                        run["error_code"] = "source_missing"
-                        raise ValueError(f"找不到待修改的源版本：{source_id}")
-                    run["source_artifact_id"] = source["id"]
-                    provider_result = await provider.edit(
-                        prompt,
-                        source.get("image_url", ""),
-                        model=parameters.get("model"),
-                        size=parameters.get("size", "1024x1280"),
-                        quality=parameters.get("quality", "high"),
-                    )
-                else:
-                    provider_result = await provider.generate(
-                        prompt,
-                        model=parameters.get("model"),
-                        size=parameters.get("size", "1024x1280"),
-                        quality=parameters.get("quality", "high"),
-                        n=parameters.get("n", 1),
-                    )
-                phase("provider.received", "已收到图片 Provider 返回结果")
-        except Exception as exc:  # provider failures become visible run failures
-            run["status"] = "failed"
-            run["phase"] = "failed"
-            run["error_code"] = run.get("error_code") or "provider_error"
-            run["message"] = f"图片生成失败：{exc}"
-            run["finished_at"] = now_iso()
-            for node in self.workflow_for_project(run["project_id"])["nodes"]:
-                if node["id"] == run["node_id"]:
-                    node["status"] = "failed"
-            self.add_event(run["project_id"], {"type": "run.failed", "run_id": run_id, "node_id": run["node_id"], "message": run["message"], "error_code": run["error_code"]})
-            return run
-        phase("quality.started", "正在检查颜色、版型、衣长、领口与面料约束")
-        image_url = self._first_image(provider_result)
-        if provider is not None and not image_url:
-            run["status"] = "failed"
-            run["phase"] = "quality.failed"
-            run["error_code"] = "empty_output"
-            run["message"] = "质量检查未通过：Provider 没有返回图片"
-            run["finished_at"] = now_iso()
-            for node in self.workflow_for_project(run["project_id"])["nodes"]:
-                if node["id"] in {run["node_id"], "quality_check"}:
-                    node["status"] = "failed"
-            self.add_event(run["project_id"], {"type": "quality.failed", "run_id": run_id, "node_id": run["node_id"], "message": run["message"], "error_code": run["error_code"]})
-            self.add_event(run["project_id"], {"type": "run.failed", "run_id": run_id, "node_id": run["node_id"], "message": run["message"], "error_code": run["error_code"]})
-            return run
-        phase("quality.passed", "质量检查通过，可以写入版本")
-        await asyncio.sleep(0.15)
-        artifact_id = new_id("art")
-        if run["node_id"] == "image_edit" and source is not None:
-            branch_version = int(source.get("version", 1)) + 1
-            existing_branch_versions = [a["version"] for a in self.artifacts.values() if a["project_id"] == run["project_id"] and a["node_id"] == "image_edit"]
-            version = branch_version
-            while version in existing_branch_versions:
-                version += 1
-        else:
-            previous = [a for a in self.artifacts.values() if a["project_id"] == run["project_id"] and a["node_id"] == run["node_id"]]
-            version = max([a["version"] for a in previous] or [0]) + 1
-        title = "设计初稿 V1" if version == 1 else (f"细节修改 V{version}" if run["node_id"] == "image_edit" else f"设计稿 V{version}")
-        hue = "#d7cab7" if version == 1 else "#d2bcae"
-        object_key = f"projects/{run['project_id']}/artifacts/{artifact_id}.png"
-        stored_image_url = await storage.save(image_url or svg_data_url(title, "演示结果 · OpenAI-compatible Provider", hue, version), object_key) if storage is not None else image_url
-        artifact = {
-            "id": artifact_id,
-            "project_id": run["project_id"],
-            "node_id": run["node_id"],
-            "version": version,
-            "status": "published",
-            "object_key": object_key,
-            "image_url": stored_image_url or svg_data_url(title, "演示结果 · OpenAI-compatible Provider", hue, version),
-            "prompt": prompt,
-            "references": run.get("references", []),
-            "materials": run.get("material_ids", []),
-            "parent_artifact_id": source.get("id") if source else None,
+    def start_generation_job(self, job_id: str) -> dict[str, Any]:
+        _, job = self._job_location(job_id)
+        job.update(
+            status="processing", message="生成服务处理中", updated_at=now_iso()
+        )
+        return job
+
+    def complete_image_job(
+        self, job_id: str, artifact: dict[str, Any]
+    ) -> dict[str, Any]:
+        workspace, job = self._job_location(job_id)
+        if not artifact.get("url") and not artifact.get("path"):
+            raise ValueError("图片成果为空")
+        change_source_turn = next(
+            (
+                item
+                for item in workspace["turns"]
+                if item["id"]
+                == (job.get("change_source_turn_id") or job.get("source_turn_id"))
+            ),
+            None,
+        )
+        change = (
+            change_source_turn.get("change_patch", {}) if change_source_turn else {}
+        )
+        version = {
+            "id": new_id("version"),
+            "label": f"V{len(workspace['versions']) + 1}",
+            "direction_id": job.get("direction_id"),
+            "parent_version_id": job.get("base_version_id"),
+            "brief_revision": job["brief_revision"],
+            "source_turn_id": job.get("source_turn_id"),
+            "change_source_turn_id": job.get("change_source_turn_id"),
+            "changed_fields": deepcopy(change.get("changes", {})),
+            "preserved_fields": list(change.get("preserve", [])),
+            "constraints": list(change.get("constraints", [])),
+            "artifacts": [deepcopy(artifact)],
+            "status": "draft",
             "created_at": now_iso(),
         }
-        self.artifacts[artifact_id] = artifact
-        run["status"] = "completed"
-        run["artifact_id"] = artifact_id
-        run["phase"] = "artifact.created"
-        run["message"] = "已生成并发布新版本"
-        run["finished_at"] = now_iso()
-        workflow = self.workflow_for_project(run["project_id"])
-        for node in workflow["nodes"]:
-            if node["id"] == run["node_id"]:
-                node["status"] = "completed"
-                node["output_artifact_id"] = artifact_id
-            elif node["id"] in {"quality_check", "artifact"}:
-                node["status"] = "completed"
-                if node["id"] == "artifact":
-                    node["output_artifact_id"] = artifact_id
-        self.add_event(run["project_id"], {"type": "run.phase", "run_id": run_id, "node_id": run["node_id"], "phase": "artifact.created", "message": run["message"], "artifact_id": artifact_id})
-        self.add_event(run["project_id"], {"type": "artifact.created", "run_id": run_id, "node_id": run["node_id"], "artifact_id": artifact_id, "message": run["message"]})
-        return run
+        workspace["versions"].append(version)
+        stale = job["brief_revision"] != workspace["brief_revisions"][-1]["revision"]
+        job.update(
+            status="stale" if stale else "completed",
+            version_id=version["id"],
+            artifact_id=artifact["id"],
+            message="图片已生成，但基于旧 Brief" if stale else "图片已生成",
+            updated_at=now_iso(),
+        )
+        if not stale:
+            transition_stage(
+                workspace,
+                "reviewing",
+                status="awaiting_confirmation",
+                reason="二维概念已生成，等待锁定候选版本",
+            )
+        return job
 
+    def fail_generation_job(self, job_id: str, message: str) -> dict[str, Any]:
+        workspace, job = self._job_location(job_id)
+        job.update(status="failed", message=message, updated_at=now_iso())
+        transition_stage(
+            workspace,
+            "concepting" if job["kind"] == "image" else "prototyping",
+            status="blocked",
+            reason=message,
+        )
+        return job
+
+    def retry_generation_job(self, job_id: str) -> dict[str, Any]:
+        workspace, job = self._job_location(job_id)
+        if job["status"] != "failed":
+            raise ValueError("只有失败任务可以重试")
+        common = {
+            "prompt": job.get("prompt", ""),
+            "attempt": int(job.get("attempt", 1)) + 1,
+            "retry_of": job["id"],
+        }
+        if job["kind"] == "rodin":
+            return self.create_rodin_job(
+                workspace["project"]["id"],
+                {
+                    **common,
+                    "version_id": job["version_id"],
+                    "input_mode": job.get("input_mode", "text"),
+                    "reference_snapshot": deepcopy(
+                        job.get("reference_snapshot") or []
+                    ),
+                },
+            )
+        retried = self.create_image_job(
+            workspace["project"]["id"],
+            {
+                **common,
+                "source_turn_id": job.get("source_turn_id"),
+                "base_version_id": job.get("base_version_id"),
+            },
+        )
+        retried["direction_id"] = job.get("direction_id")
+        return retried
+
+    def create_rodin_job(
+        self, project_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        workspace = self.workspaces[project_id]
+        version = next(
+            (
+                item
+                for item in workspace["versions"]
+                if item["id"] == payload["version_id"]
+            ),
+            None,
+        )
+        if version is None:
+            raise ValueError("三维任务关联的设计版本不存在")
+        if workspace["project"].get("candidate_version_id") != version["id"]:
+            raise ValueError("请先锁定当前二维版本为候选，再生成三维模型")
+        brief = next(
+            item
+            for item in workspace["brief_revisions"]
+            if item["revision"] == version["brief_revision"]
+        )
+        translations = [
+            item["statement"]
+            for item in workspace["culture"]
+            if item["kind"] == "translation"
+        ]
+        input_mode = payload.get("input_mode") or "image"
+        reference_snapshot: list[dict[str, Any]] = []
+        if input_mode == "image":
+            reference_snapshot = deepcopy(payload.get("reference_snapshot") or [])
+            if not reference_snapshot:
+                view_order = {
+                    "front": 0,
+                    "left": 1,
+                    "right": 2,
+                    "back": 3,
+                    "top": 4,
+                    "unknown": 5,
+                }
+                candidates = [
+                    (index, artifact)
+                    for index, artifact in enumerate(version["artifacts"])
+                    if artifact.get("kind") == "image" and artifact.get("path")
+                ]
+                candidates.sort(
+                    key=lambda item: (
+                        view_order.get(item[1].get("view_label", "unknown"), 5),
+                        item[0],
+                    )
+                )
+                reference_snapshot = [
+                    {
+                        "artifact_id": artifact["id"],
+                        "path": artifact["path"],
+                        "media_type": artifact.get("media_type", "image/png"),
+                        "view_label": artifact.get("view_label", "unknown"),
+                    }
+                    for _, artifact in candidates[:5]
+                ]
+            if not reference_snapshot:
+                raise ValueError("当前版本没有可用于三维生成的二维参考图")
+            prompt = payload.get("prompt", "")
+        elif input_mode == "text":
+            prompt = payload.get("prompt") or (
+                "A modern desktop incense holder concept inspired by Suzhou gardens. "
+                "Restrained matte ceramic, stable base, simplified layered openings, no text, single object. "
+                f"Brief: {json.dumps(brief['confirmed'], ensure_ascii=False)}. "
+                f"Cultural translations: {'; '.join(translations)}. "
+                f"Changes: {json.dumps(version['changed_fields'], ensure_ascii=False)}. "
+                f"Constraints: {json.dumps(version.get('constraints', []), ensure_ascii=False)}."
+            )
+        else:
+            raise ValueError("不支持的 Rodin 输入模式")
+        now = now_iso()
+        job = {
+            "id": new_id("job_rodin"),
+            "kind": "rodin",
+            "direction_id": version.get("direction_id"),
+            "status": "submitted",
+            "version_id": version["id"],
+            "artifact_id": None,
+            "message": "Rodin 三维任务已提交",
+            "prompt": prompt,
+            "brief_revision": version["brief_revision"],
+            "source_turn_id": version.get("source_turn_id"),
+            "base_version_id": None,
+            "attempt": int(payload.get("attempt", 1)),
+            "retry_of": payload.get("retry_of"),
+            "input_mode": input_mode,
+            "reference_artifact_ids": [
+                item["artifact_id"] for item in reference_snapshot
+            ],
+            "reference_snapshot": reference_snapshot,
+            "consistency_status": (
+                "pending" if input_mode == "image" else "not_applicable"
+            ),
+            "created_at": now,
+            "updated_at": now,
+        }
+        workspace["jobs"].append(job)
+        transition_stage(
+            workspace,
+            "prototyping",
+            status="active",
+            reason="正在从锁定的二维候选生成三维模型",
+        )
+        return job
+
+    def complete_rodin_job(
+        self, job_id: str, artifact: dict[str, Any]
+    ) -> dict[str, Any]:
+        workspace, job = self._job_location(job_id)
+        version = next(
+            item for item in workspace["versions"] if item["id"] == job["version_id"]
+        )
+        version["artifacts"].append(deepcopy(artifact))
+        stale = (
+            workspace["versions"][-1]["id"] != version["id"]
+            or workspace["brief_revisions"][-1]["revision"] != job["brief_revision"]
+        )
+        job.update(
+            status="stale" if stale else "completed",
+            artifact_id=artifact["id"],
+            message="三维模型已完成，但关联旧版本" if stale else "三维概念模型已完成",
+            updated_at=now_iso(),
+        )
+        if not stale:
+            transition_stage(
+                workspace,
+                "reviewing",
+                status="awaiting_confirmation",
+                reason="二维与三维成果已关联，等待评审",
+            )
+        return job
+
+    def generation_job(self, project_id: str, job_id: str) -> dict[str, Any] | None:
+        return next(
+            (job for job in self.workspaces[project_id]["jobs"] if job["id"] == job_id),
+            None,
+        )
+
+    def find_artifact(self, artifact_id: str) -> dict[str, Any] | None:
+        for workspace in self.workspaces.values():
+            for version in workspace["versions"]:
+                artifact = next(
+                    (
+                        item
+                        for item in version["artifacts"]
+                        if item["id"] == artifact_id
+                    ),
+                    None,
+                )
+                if artifact is not None:
+                    return artifact
+        return None
+
+    def select_candidate_version(
+        self, project_id: str, version_id: str
+    ) -> dict[str, Any] | None:
+        workspace = self.workspaces[project_id]
+        selected = next(
+            (item for item in workspace["versions"] if item["id"] == version_id),
+            None,
+        )
+        if selected is None:
+            return None
+        for version in workspace["versions"]:
+            if version["status"] == "selected":
+                version["status"] = "reviewing"
+        selected["status"] = "selected"
+        workspace["project"]["candidate_version_id"] = version_id
+        transition_stage(
+            workspace,
+            "prototyping",
+            status="awaiting_confirmation",
+            reason="二维候选已锁定，可以生成三维模型",
+        )
+        return selected
+
+    def proposal_for_project(self, project_id: str) -> dict[str, Any] | None:
+        workspace = self.workspaces[project_id]
+        candidate_id = workspace["project"].get("candidate_version_id")
+        if not candidate_id:
+            return None
+        version = next(
+            item for item in workspace["versions"] if item["id"] == candidate_id
+        )
+        brief = next(
+            item
+            for item in workspace["brief_revisions"]
+            if item["revision"] == version["brief_revision"]
+        )
+        public_artifact_fields = {
+            "id", "kind", "url", "media_type", "role", "disclaimer"
+        }
+        artifacts = [
+            {
+                key: value
+                for key, value in artifact.items()
+                if key in public_artifact_fields
+            }
+            for artifact in version["artifacts"]
+        ]
+        culture = [
+            {
+                key: item.get(key, "")
+                for key in (
+                    "id", "kind", "title", "statement", "source_title", "source_url"
+                )
+            }
+            for item in self.customer_safe_culture(project_id)
+        ]
+        return {
+            "project": {
+                "id": workspace["project"]["id"],
+                "name": workspace["project"]["name"],
+                "product_type": workspace["project"]["product_type"],
+            },
+            "brief": deepcopy(brief["confirmed"]),
+            "culture": culture,
+            "version": {
+                "id": version["id"],
+                "label": version["label"],
+                "changed_fields": deepcopy(version["changed_fields"]),
+                "preserved_fields": list(version["preserved_fields"]),
+                "constraints": list(version["constraints"]),
+                "artifacts": artifacts,
+            },
+            "disclaimer": "本提案为概念设计与沟通材料，三维模型不是生产 CAD，尺寸、结构、材料与工艺须经工程验证。",
+        }
