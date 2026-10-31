@@ -1,0 +1,47 @@
+{
+  "name": "suzuo-creative-workbench-end-to-end",
+  "goal": "从项目首页推进一个苏州文创项目，完成对话确认、二维候选、三维入口、作品库、评审、提案和下载清单查看。",
+  "success_outcome": "工作台展示同一 projectId 下的设计上下文，用户能看到可追溯资产、评审状态和提案下载入口。",
+  "fixture": "使用本机种子项目和单用户内存数据；不提交真实个人数据、不触发外部不可逆操作。",
+  "coverage_inventory": [
+    { "surface": "项目首页", "operation": "查看多个项目并进入一个项目", "coverage": "covered" },
+    { "surface": "设计对话", "operation": "输入想法并确认 Brief/下一步", "coverage": "covered" },
+    { "surface": "二维概念", "operation": "查看生成候选、候选状态和修改入口", "coverage": "covered" },
+    { "surface": "三维验证", "operation": "查看 Rodin 入口、来源二维和贴图模型状态", "coverage": "covered" },
+    { "surface": "作品库", "operation": "按类型/状态/方向筛选并打开资产详情", "coverage": "covered" },
+    { "surface": "评审中心", "operation": "绑定版本、资产和区域并切换评审状态", "coverage": "covered" },
+    { "surface": "提案", "operation": "切换内部/客户视图并查看门禁与下载清单", "coverage": "covered" },
+    { "surface": "错误恢复", "operation": "观察缺少候选或未核验文化信息时的阻断和返回入口", "coverage": "covered" },
+    { "surface": "响应式", "operation": "验证 1440x900、1280x720、1200x700 和窄屏不发生横向溢出", "coverage": "covered" },
+    { "surface": "外部提交", "operation": "向客户发送提案或调用真实生成服务", "coverage": "excluded", "reason": "本轮只验证本机 Demo 的安全可见流程，不执行外部不可逆操作。" }
+  ],
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900 },
+    "minimum_desktop": { "width": 1280, "height": 720 },
+    "compact_desktop": { "width": 1200, "height": 700 },
+    "narrow": { "width": 375, "height": 812 }
+  },
+  "flows": {
+    "happy_path": [
+      { "action": "打开项目首页并进入苏州园林香插项目。", "assertion": "项目上下文和下一步入口可见。" },
+      { "action": "在设计对话输入并确认一个创意描述。", "assertion": "Brief/设计事实在右栏出现，未自动创建未经确认的生成任务。" },
+      { "action": "查看二维候选并锁定候选。", "assertion": "当前候选、版本关系和三维入口显示一致。" },
+      { "action": "进入作品库、评审中心和提案。", "assertion": "同一项目的资产、评审、文化核验和提案清单可追溯。" }
+    ],
+    "validation_or_empty": [
+      { "action": "打开客户提案但存在未核验文化事实或缺少候选。", "assertion": "界面展示结构化阻断原因，并提供返回核验/选择资产的入口。" }
+    ],
+    "service_failure_recovery": [
+      { "action": "在生成服务不可用时查看错误状态。", "assertion": "错误不会伪造成功资产，并保留安全重试或返回工作台入口。" }
+    ],
+    "cancellation": [
+      { "action": "打开导览或详情弹层后按 Escape/关闭。", "assertion": "弹层关闭，焦点回到触发控件，页面布局不跳动。" }
+    ],
+    "persistence": [
+      { "action": "在项目间切换并刷新页面。", "assertion": "projectId 隔离保持，当前项目不会显示其他项目资产。" }
+    ]
+  },
+  "cleanup": [
+    "不创建外部记录；结束浏览器会话即可，内存工作区由本地服务生命周期隔离。"
+  ]
+}
