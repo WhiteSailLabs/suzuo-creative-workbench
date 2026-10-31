@@ -25,9 +25,11 @@ export function AppShell({ view, onNavigate, projects, projectId, project, onSel
     return () => window.removeEventListener('resize', update)
   }, [])
 
-  const closeTour = () => setTourOpen(false)
-  const completeTour = () => {
-    try { window.sessionStorage.setItem('suzuo-product-tour-seen', '1') } catch { /* ignore storage errors */ }
+  const closeTour = (reason?: 'skip' | 'complete' | 'escape' | 'close') => {
+    setTourOpen(false)
+    if (reason === 'skip' || reason === 'complete') {
+      try { window.sessionStorage.setItem('suzuo-product-tour-seen', '1') } catch { /* ignore storage errors */ }
+    }
   }
 
   return <div className="workbench-shell">
@@ -50,7 +52,7 @@ export function AppShell({ view, onNavigate, projects, projectId, project, onSel
       </div>
     </header>
     {view === 'workbench' && viewportTooSmall && <div className="viewport-notice" role="alert"><strong>建议扩大窗口</strong><span>当前窗口低于 1280 × 720 的完整工作台尺寸。</span></div>}
-    <ProductTour open={tourOpen} onClose={closeTour} onComplete={completeTour} />
+    <ProductTour open={tourOpen} onClose={closeTour} />
     {children}
   </div>
 }

@@ -10,11 +10,10 @@ const steps = [
 
 type ProductTourProps = {
   open: boolean
-  onClose: () => void
-  onComplete?: () => void
+  onClose: (reason?: 'skip' | 'complete' | 'escape' | 'close') => void
 }
 
-export function ProductTour({ open, onClose, onComplete }: ProductTourProps) {
+export function ProductTour({ open, onClose }: ProductTourProps) {
   const [step, setStep] = useState(0)
   const closeButton = useRef<HTMLButtonElement>(null)
 
@@ -30,7 +29,7 @@ export function ProductTour({ open, onClose, onComplete }: ProductTourProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        onClose()
+        onClose('escape')
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -41,10 +40,7 @@ export function ProductTour({ open, onClose, onComplete }: ProductTourProps) {
 
   const current = steps[step]
   const last = step === steps.length - 1
-  const finish = () => {
-    onComplete?.()
-    onClose()
-  }
+  const finish = () => onClose('complete')
 
   return <div className="product-tour-backdrop" data-testid="product-tour-backdrop">
     <section className="product-tour" role="dialog" aria-modal="true" aria-label="产品导览" aria-describedby="product-tour-description">
@@ -53,7 +49,7 @@ export function ProductTour({ open, onClose, onComplete }: ProductTourProps) {
           <span className="eyebrow">苏作创意台</span>
           <p className="product-tour-progress">第 {step + 1} 步，共 {steps.length} 步</p>
         </div>
-        <button ref={closeButton} className="icon-button" type="button" aria-label="关闭导览" onClick={onClose}>×</button>
+        <button ref={closeButton} className="icon-button" type="button" aria-label="关闭导览" onClick={() => onClose('close')}>×</button>
       </header>
       <div className="product-tour-body">
         <div className="product-tour-marker" aria-hidden="true">{String(step + 1).padStart(2, '0')}</div>
@@ -64,7 +60,7 @@ export function ProductTour({ open, onClose, onComplete }: ProductTourProps) {
         </div>
       </div>
       <footer className="product-tour-actions">
-        <button className="tour-skip" type="button" onClick={onClose}>跳过导览</button>
+        <button className="tour-skip" type="button" onClick={() => onClose('skip')}>跳过导览</button>
         {last ? <button className="tour-primary" type="button" onClick={finish}>完成导览</button> : <button className="tour-primary" type="button" onClick={() => setStep(value => value + 1)}>下一步</button>}
       </footer>
     </section>

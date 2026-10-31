@@ -46,6 +46,7 @@ export function createReview(projectId: string, payload: ReviewCreate) { return 
 export function resolveReview(projectId: string, reviewId: string, status: Exclude<ReviewStatus, 'pending'>, comment?: string) { return request<ReviewRecord>(`${projectPath(projectId)}/reviews/${encodeURIComponent(reviewId)}`, { method: 'PATCH', body: JSON.stringify({ status, comment }) }) }
 export function checkStageGate(projectId: string, action: StageGateAction, context: StageGateContext = {}) { return request<StageGateResult>(`${projectPath(projectId)}/stage-gates/${action}`, post(context)) }
 export function getManifest(projectId: string, audience: ProposalAudience = 'internal') { return request<AssetManifest>(`${projectPath(projectId)}/manifest?audience=${audience}`) }
+export function manifestUrl(projectId: string, audience: ProposalAudience = 'internal') { return `${API_BASE_URL}${projectPath(projectId)}/manifest?audience=${audience}` }
 // Asset URLs can be provider URLs or API-relative paths; keep the recorded file URL.
 export function assetDownloadUrl(url: string) {
   if (url.startsWith('/')) return `${API_BASE_URL}${url}`
