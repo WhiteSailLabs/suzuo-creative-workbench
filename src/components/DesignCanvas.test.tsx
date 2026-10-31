@@ -35,6 +35,17 @@ describe('DesignCanvas', () => {
     expect(screen.getByText('待一致性检查')).toBeInTheDocument()
   })
 
+  it('opens a version detail drawer with parent, prompt, changes, and artifacts', async () => {
+    const jobs: GenerationJob[] = [{ id: 'image_job', kind: 'image', status: 'completed', version_id: version.id, artifact_id: 'image_1', message: '完成', prompt: '现代漏景香插，保留留白', updated_at: '' }]
+    render(<DesignCanvas versions={[{ ...version, changed_fields: { hollow_structure: 'simplified' }, constraints: ['stable_base'] }]} jobs={jobs} selectedVersionId={version.id} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: '查看版本详情' }))
+    const drawer = screen.getByRole('dialog', { name: '版本详情-V2' })
+    expect(drawer).toHaveTextContent('父版本：无')
+    expect(drawer).toHaveTextContent('现代漏景香插，保留留白')
+    expect(drawer).toHaveTextContent('stable_base')
+    expect(drawer).toHaveTextContent('image · image_1')
+  })
+
   it('labels an explicit text fallback without claiming image provenance', async () => {
     const textVersion: DesignVersion = {
       ...version,

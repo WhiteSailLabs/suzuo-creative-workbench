@@ -4,6 +4,7 @@ import { assetUrl } from '../lib/api'
 import { formatDesignValue } from '../lib/formatDesignValue'
 import { VersionTimeline } from './VersionTimeline'
 import { VersionComparison } from './VersionComparison'
+import { VersionDetailDrawer } from './VersionDetailDrawer'
 import { isRunning } from './TaskCenter'
 import type { Artifact, AssetRecord, DesignDirection, CulturalReference, DesignVersion, GenerationJob } from '../types/workbench'
 
@@ -25,6 +26,7 @@ function artifactSource(artifact?: Artifact) {
 
 export function DesignCanvas({ assets = [], direction, culture = [], proposals = [], versions, jobs, selectedVersionId, candidateVersionId, onSelectVersion, onLockCandidate, onGenerate3d, onRetryJob }: Props) {
   const [tab, setTab] = useState<'image' | 'model' | 'compare' | 'relations'>('image')
+  const [detailVersion, setDetailVersion] = useState<DesignVersion | null>(null)
   const selected = useMemo(() => versions.find((version) => version.id === selectedVersionId) ?? versions.at(-1), [versions, selectedVersionId])
   const recordedCultureIds = new Set(assets.filter(asset => asset.version_id === selected?.id && asset.direction_id === selected?.direction_id).flatMap(asset => asset.source_culture_ids ?? []))
   const sourceCulture = direction && direction.id === selected?.direction_id ? culture.filter(item => recordedCultureIds.has(item.id) && direction.culture_ids.includes(item.id)) : []
@@ -51,7 +53,8 @@ export function DesignCanvas({ assets = [], direction, culture = [], proposals =
       {selected && tab === 'model' && (modelArtifact ? <><Suspense fallback={<div className="viewer-loading">正在启动三维查看器…</div>}><ModelViewer url={artifactSource(modelArtifact)} /></Suspense><div className="model-provenance"><strong>{modelArtifact.input_mode === 'image' ? '由二维图生成' : '文字降级生成'}</strong>{modelArtifact.input_mode === 'image' && <span>{modelArtifact.reference_artifact_ids?.length ?? 0} 张参考图</span>}<span>{consistencyLabels[modelArtifact.consistency_status ?? (modelArtifact.input_mode === 'image' ? 'pending' : 'not_applicable')]}</span></div><span className="model-disclaimer">{modelArtifact.disclaimer ?? '概念模型，不是生产 CAD'}</span></> : <div className="empty-canvas"><Box /><p>这个版本还没有三维模型</p>{!imageArtifact && <span>先生成或导入二维概念图</span>}{imageArtifact && !selectedIsCandidate && <span>先锁定这个二维版本为候选</span>}<button disabled={!imageArtifact || !selectedIsCandidate || rodinBusy} onClick={() => imageArtifact && selectedIsCandidate && !rodinBusy && onGenerate3d?.(selected.id)}>用候选版本生成 3D</button><button onClick={() => setTab('image')}>返回二维</button>{rodinBusy && <span>当前项目已有同类生成任务正在进行</span>}<span>概念模型，不是生产 CAD</span></div>)}
     </div>
     {(failedJobs.length > 0 || hasStale) && <div className="job-notices">{failedJobs.map((job) => <div className="job-failed" key={job.id}><TriangleAlert size={14} /><span>{job.message}</span><button disabled={jobs.some(other => other.kind === job.kind && isRunning(other))} title={jobs.some(other => other.kind === job.kind && isRunning(other)) ? '当前项目已有同类生成任务正在进行' : undefined} onClick={() => onRetryJob?.(job.id)}><RefreshCw size={12} />重试</button></div>)}{hasStale && <div className="job-stale">旧任务结果已保留，不会替换当前版本</div>}</div>}
-    <div className="version-review"><VersionTimeline versions={versions} candidateId={candidateVersionId} selectedId={selected?.id} onSelect={onSelectVersion} />{selected && <><div className="version-diff">{Object.entries(selected.changed_fields).map(([key, value]) => <span key={key}><strong>{changeLabels[key] ?? key}</strong>{valueLabels[String(value)] ?? formatDesignValue(value)}</span>)}{selected.preserved_fields.map((item) => <span className="preserved" key={item}><Check size={11} />{preserveLabels[item] ?? `保留 ${item}`}</span>)}</div><button className="lock-candidate" disabled={selected.id === candidateVersionId} onClick={() => void lockAndContinue()}>{selected.id === candidateVersionId ? '已锁定候选' : '锁定为候选版本'}</button></>}
+    <div className="version-review"><VersionTimeline versions={versions} candidateId={candidateVersionId} selectedId={selected?.id} onSelect={onSelectVersion} />{selected && <><div className="version-diff">{Object.entries(selected.changed_fields).map(([key, value]) => <span key={key}><strong>{changeLabels[key] ?? key}</strong>{valueLabels[String(value)] ?? formatDesignValue(value)}</span>)}{selected.preserved_fields.map((item) => <span className="preserved" key={item}><Check size={11} />{preserveLabels[item] ?? `保留 ${item}`}</span>)}</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="lock-candidate" disabled={selected.id === candidateVersionId} onClick={() => void lockAndContinue()}>{selected.id === candidateVersionId ? '已锁定候选' : '锁定为候选版本'}</button><button onClick={() => setDetailVersion(selected)}>查看版本详情</button></div></>}
     </div>
+    {detailVersion && <VersionDetailDrawer version={detailVersion} parent={versions.find(version => version.id === detailVersion.parent_version_id) ?? null} jobs={jobs} onClose={() => setDetailVersion(null)} />}
   </section>
 }
