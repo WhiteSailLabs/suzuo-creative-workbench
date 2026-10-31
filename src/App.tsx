@@ -13,11 +13,12 @@ import { DirectionSwitcher } from './components/DirectionSwitcher'
 import { TaskCenter, isRunning } from './components/TaskCenter'
 import { StageRail } from './components/StageRail'
 import { useSpeechInput } from './hooks/useSpeechInput'
-import { DEFAULT_PROJECT_ID, activateDirection, createImageJob, createRodinJob, listProjects, createTurn, getJob, getProposal, getWorkspace, retryJob, selectCandidate } from './lib/api'
+import { ApiError, DEFAULT_PROJECT_ID, activateDirection, createImageJob, createRodinJob, listProjects, createTurn, getJob, getProposal, getWorkspace, retryJob, selectCandidate } from './lib/api'
 import type { AppView, ChangePatch, ProjectSummary, ConversationDisplayTurn, GenerationJob, Proposal, Workspace, WorkbenchUiState } from './types/workbench'
 
 const terminalStatuses = new Set(['completed', 'failed', 'stale'])
 const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds))
+type ProposalGate = { missing: string[]; reason: string; action: string }
 
 function App() {
   const [view, setView] = useState<AppView>('projects')
@@ -39,6 +40,7 @@ function App() {
   const [rightCollapsed, setRightCollapsed] = useState(false)
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
   const [proposal, setProposal] = useState<Proposal | null>(null)
+  const [proposalGate, setProposalGate] = useState<ProposalGate | null>(null)
   const [pendingGeneration, setPendingGeneration] = useState<{ sourceTurnId: string; baseVersionId?: string; patch: ChangePatch; text: string } | null>(null)
   const [draft, setDraft] = useState({ text: '', revision: 0 })
   const [generationNotice, setGenerationNotice] = useState('')
@@ -69,7 +71,7 @@ function App() {
     if (id !== projectId) {
       projectContext.current += 1
       activeProjectId.current = id
-      setWorkspace(null); directionActivationPending.current = false; setActivatingDirection(false); activeDirectionId.current = null; setDirectionId(null); setSelectedVersionId(null); setLocalTurns([]); setProposal(null)
+      setWorkspace(null); directionActivationPending.current = false; setActivatingDirection(false); activeDirectionId.current = null; setDirectionId(null); setSelectedVersionId(null); setLocalTurns([]); setProposal(null); setProposalGate(null)
       setPendingGeneration(null); setGenerationNotice(''); setDraft({ text: '', revision: Date.now() }); submittingJobs.current.clear(); setStatus('ready'); setOffline(false); speech.reset(); setProjectId(id)
     }
     setView('workbench')
@@ -203,8 +205,15 @@ function App() {
   }
 
   const showProposal = async () => {
+    setProposal(null); setProposalGate(null)
     try { const loaded = await getProposal(projectId, 'internal'); if (activeProjectId.current === projectId && projectContext.current === contextVersion) setProposal(loaded) }
-    catch { if (activeProjectId.current === projectId && projectContext.current === contextVersion) setStatus('failed') }
+    catch (error) {
+      if (activeProjectId.current !== projectId || projectContext.current !== contextVersion) return
+      if (error instanceof ApiError && error.status === 409 && typeof error.detail === 'object' && error.detail) {
+        const detail = error.detail as Partial<ProposalGate>
+        setProposalGate({ missing: Array.isArray(detail.missing) ? detail.missing : [], reason: detail.reason ?? error.message, action: detail.action ?? '补齐阶段条件后重试' })
+      } else setProposalGate({ missing: [], reason: error instanceof Error ? error.message : '提案加载失败', action: '请稍后重试' })
+    }
   }
 
   const retryGeneration = async (jobId: string) => {
@@ -227,7 +236,7 @@ function App() {
   const navigate = (next: AppView) => {
     setView(next)
     if (next === 'projects') void refreshProjects()
-    if (next === 'proposal' && workspace?.project.candidate_version_id) void showProposal()
+    if (next === 'proposal') void showProposal()
   }
   const placeholderTitles: Partial<Record<AppView, string>> = { works: '作品', assets: '资产', reviews: '版本评审', proposal: '提案' }
 
@@ -238,7 +247,7 @@ function App() {
       <div style={{ gridColumn: 1, gridRow: 2, minHeight: 0, display: 'flex', flexDirection: 'column' }}><button aria-expanded={!leftCollapsed} onClick={() => setLeftCollapsed(!leftCollapsed)}>{leftCollapsed ? '展开对话' : '收起对话'}</button><div hidden={leftCollapsed} style={{ minHeight: 0, flex: 1 }}><ConversationPanel turns={turns} speechSupported={speech.supported} speechState={speech.state} speechTranscript={speech.transcript} busy={status === 'interpreting'} onStartSpeech={speech.start} onStopSpeech={speech.stop} draft={draft} pendingGeneration={pendingGeneration?.patch} generationNotice={generationNotice} generationBlocked={activatingDirection ? '正在切换方向，请等待成功激活后再生成' : workspace.jobs.some(job => job.kind === 'image' && isRunning(job)) ? '当前项目已有同类生成任务正在进行' : workspace.directions?.length && (directionId !== workspace.active_direction_id || directionId !== workspace.project.active_direction_id) ? '请先成功激活当前方向后再生成' : undefined} onCancelGeneration={() => { if (pendingGeneration) setDraft({ text: pendingGeneration.text, revision: Date.now() }); setPendingGeneration(null) }} onConfirmGeneration={() => { if (!pendingGeneration || !canGenerate('image')) return; const pending = pendingGeneration; setPendingGeneration(null); void runImageGeneration(pending.sourceTurnId, pending.baseVersionId, pending.patch) }} onSubmit={submitTurn} /></div></div>
       <DesignCanvas assets={workspace.assets} direction={workspace.directions?.find(direction => direction.id === directionId)} culture={workspace.culture} proposals={workspace.proposals} versions={visibleVersions} jobs={workspace?.jobs ?? []} selectedVersionId={displayedVersionId} candidateVersionId={workspace?.project.candidate_version_id ?? null} onSelectVersion={setSelectedVersionId} onLockCandidate={lockCandidate} onGenerate3d={(id) => void runRodinGeneration(id)} onRetryJob={(id) => void retryGeneration(id)} />
       <aside style={{ gridColumn: 3, gridRow: 2, minHeight: 0, overflowY: 'auto' }}><button aria-expanded={!rightCollapsed} onClick={() => setRightCollapsed(!rightCollapsed)}>{rightCollapsed ? '展开设计状态' : '收起设计状态'}</button><TaskCenter jobs={workspace.jobs} onRetry={id => void retryGeneration(id)} /><div hidden={rightCollapsed}><DirectionSwitcher directions={workspace.directions ?? []} selectedId={directionId} busy={activatingDirection} onSelect={id => void switchDirection(id)} /><DesignTruthPanel brief={latestBrief} culture={workspace?.culture ?? []} /></div></aside>
-    </main> : view === 'reviews' && workspace ? <ReviewCenter projectId={projectId} versions={workspace.versions} assets={workspace.assets ?? []} reviews={workspace.reviews ?? []} onBackToWorkbench={() => setView('workbench')} onChanged={async () => { await load(); void refreshProjects() }} /> : (view === 'works' || view === 'assets') && workspace ? <AssetLibrary key={projectId} projectId={projectId} projectName={workspace.project.name} versions={workspace.versions} directions={workspace.directions ?? []} culture={workspace.culture} jobs={workspace.jobs} initialView={view} onAssetsChanged={() => { void load(); void refreshProjects() }} /> : view === 'proposal' && !proposal ? <main className="app-page"><section className="page-placeholder panel-card"><h1>提案</h1><p>正在加载当前项目提案…</p></section></main> : <main className="app-page"><section className="page-placeholder panel-card"><h1>{view === 'workbench' ? '工作台' : placeholderTitles[view]}</h1><p>{view === 'workbench' ? offline ? '当前项目暂时无法加载，请重新连接。' : '正在加载当前项目…' : '此页面将在后续步骤开放。可返回工作台继续设计。'}</p>{view !== 'workbench' && <button onClick={() => setView('workbench')}>返回工作台</button>}</section></main>}
+    </main> : view === 'reviews' && workspace ? <ReviewCenter projectId={projectId} versions={workspace.versions} assets={workspace.assets ?? []} reviews={workspace.reviews ?? []} onBackToWorkbench={() => setView('workbench')} onChanged={async () => { await load(); void refreshProjects() }} /> : (view === 'works' || view === 'assets') && workspace ? <AssetLibrary key={projectId} projectId={projectId} projectName={workspace.project.name} versions={workspace.versions} directions={workspace.directions ?? []} culture={workspace.culture} jobs={workspace.jobs} initialView={view} onAssetsChanged={() => { void load(); void refreshProjects() }} /> : view === 'proposal' && !proposal ? proposalGate ? <main className="app-page"><section className="page-placeholder panel-card" aria-labelledby="proposal-gate-heading"><h1 id="proposal-gate-heading">提案暂不可用</h1><div role="alert"><p>{proposalGate.reason}</p>{proposalGate.missing.length > 0 && <ul>{proposalGate.missing.map(item => <li key={item}>{item}</li>)}</ul>}<p>{proposalGate.action}</p></div><button onClick={() => setView('workbench')}>返回工作台</button></section></main> : <main className="app-page"><section className="page-placeholder panel-card"><h1>提案</h1><p role="status">正在加载当前项目提案…</p></section></main> : <main className="app-page"><section className="page-placeholder panel-card"><h1>{view === 'workbench' ? '工作台' : placeholderTitles[view]}</h1><p>{view === 'workbench' ? offline ? '当前项目暂时无法加载，请重新连接。' : '正在加载当前项目…' : '此页面将在后续步骤开放。可返回工作台继续设计。'}</p>{view !== 'workbench' && <button onClick={() => setView('workbench')}>返回工作台</button>}</section></main>}
     {proposal && <ProposalView projectId={projectId} proposal={proposal} onClose={() => setProposal(null)} onGoToCulture={() => { setProposal(null); setView('assets') }} />}
   </AppShell>
 }

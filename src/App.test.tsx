@@ -181,6 +181,28 @@ describe('responsive workbench shell', () => {
   })
 })
 
+describe('proposal gates', () => {
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
+
+  it('renders a recoverable structured gate when proposal has no locked candidate', async () => {
+    const calls: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      calls.push(url)
+      if (url.endsWith('/projects')) return { ok: true, json: async () => [] }
+      if (url.endsWith('/proposal?audience=internal')) return { ok: false, status: 409, json: async () => ({ detail: { missing: ['candidate_version'], reason: '请先锁定二维候选', action: '返回工作台锁定候选版本后重试' } }) }
+      return { ok: true, json: async () => workspace }
+    }))
+    render(<App />)
+    await userEvent.click(await screen.findByRole('button', { name: '工作台' }))
+    await screen.findByLabelText('描述或修改设计')
+    await userEvent.click(screen.getByRole('button', { name: '提案' }))
+    expect(await screen.findByRole('heading', { name: '提案暂不可用' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('请先锁定二维候选')
+    expect(screen.getByText('candidate_version')).toBeInTheDocument()
+    expect(calls.some(url => url.endsWith('/proposal?audience=internal'))).toBe(true)
+  })
+})
+
 
 it('ignores a stale workspace response after switching away and back to the same project', async () => {
   let resolveInitial!: (value: unknown) => void
