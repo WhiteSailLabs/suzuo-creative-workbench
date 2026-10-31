@@ -4,6 +4,8 @@ import base64
 import html
 import json
 import secrets
+import struct
+from pathlib import Path
 from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any
@@ -40,6 +42,10 @@ def svg_data_url(title: str, subtitle: str, hue: str, revision: int = 1) -> str:
     </svg>"""
     encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
     return f"data:image/svg+xml;base64,{encoded}"
+
+
+class GenerationConflict(ValueError):
+    pass
 
 
 class MemoryStore:
@@ -124,6 +130,151 @@ class MemoryStore:
 
     def workspace_for_project(self, project_id: str) -> dict[str, Any] | None:
         return self.workspaces.get(project_id)
+
+    @staticmethod
+    def _has_pbr(artifact: dict[str, Any]) -> bool:
+        """Inspect embedded GLB material references; names/roles are not evidence."""
+        try:
+            with Path(artifact.get("path", "")).open("rb") as stream:
+                magic, version, total = struct.unpack("<4sII", stream.read(12))
+                size, chunk_type = struct.unpack("<II", stream.read(8))
+                if magic != b"glTF" or version != 2 or chunk_type != 0x4E4F534A or size > 20_000_000:
+                    return False
+                if total != Path(artifact["path"]).stat().st_size or size + 20 > total:
+                    return False
+                document = json.loads(stream.read(size))
+                bin_size, bin_type = struct.unpack("<II", stream.read(8))
+                if bin_type != 0x004E4942 or bin_size + size + 28 != total:
+                    return False
+            materials = document.get("materials", [])
+            textures = document.get("textures", [])
+            images = document.get("images", [])
+            views = document.get("bufferViews", [])
+            used = [p.get("material") for mesh in document.get("meshes", [])
+                    for p in mesh.get("primitives", [])]
+            if not used:
+                return False
+            for index in used:
+                if not isinstance(index, int) or index < 0:
+                    return False
+                material = materials[index]
+                if "KHR_materials_unlit" in material.get("extensions", {}):
+                    return False
+                texture_index = material["pbrMetallicRoughness"]["baseColorTexture"]["index"]
+                if not isinstance(texture_index, int) or texture_index < 0:
+                    return False
+                source = textures[texture_index]["source"]
+                if not isinstance(source, int) or source < 0:
+                    return False
+                image = images[source]
+                view_index = image["bufferView"]
+                if not isinstance(view_index, int) or view_index < 0:
+                    return False
+                view = views[view_index]
+                if (view.get("buffer") != 0 or view.get("byteLength", 0) <= 0
+                    or view.get("byteOffset", 0) < 0
+                    or view.get("byteOffset", 0) + view["byteLength"] > bin_size):
+                    return False
+            return True
+        except (OSError, ValueError, KeyError, IndexError, TypeError, struct.error):
+            return False
+
+    @staticmethod
+    def _guard_generation(workspace, kind):
+        if any(j["kind"] == kind and j["status"] in {"submitted", "processing"}
+               for j in workspace["jobs"]):
+            raise GenerationConflict("当前项目已有同类生成任务正在进行")
+
+    def _upsert_asset(self, workspace, version, artifact, job):
+        now = now_iso()
+        existing = next((a for a in workspace["assets"]
+                         if a["asset_id"] == artifact["id"]), None)
+        direction = next((d for d in workspace["directions"]
+                          if d["id"] == version.get("direction_id")), {})
+        parent = next((v for v in workspace["versions"]
+                       if v["id"] == version.get("parent_version_id")), {})
+        item = {
+            "asset_id": artifact["id"], "asset_type": artifact["kind"],
+            "project_id": workspace["project"]["id"],
+            "direction_id": version.get("direction_id"), "version_id": version["id"],
+            "title": artifact.get("title") or f"{version['label']} {artifact['kind']}",
+            "status": job["status"],
+            "source_asset_ids": list(job.get("reference_artifact_ids") or
+                                     [a["id"] for a in parent.get("artifacts", []) if a.get("kind") == "image"]),
+            "source_turn_id": job.get("source_turn_id"),
+            "source_culture_ids": list(direction.get("culture_ids", [])),
+            "tags": [], "created_at": now, "updated_at": now,
+            "owner": workspace["project"].get("owner", ""), "rights_note": "",
+            "url": artifact.get("url", ""), "media_type": artifact.get("media_type", ""),
+        }
+        if artifact["kind"] == "model_glb":
+            pbr = self._has_pbr(artifact)
+            item["material_status"] = "pbr" if pbr else "unverified"
+            item["role"] = "final" if pbr and item["status"] == "completed" else "preview"
+            if not pbr and item["status"] == "completed":
+                item["status"] = "draft"
+        if existing:
+            existing.update({k: v for k, v in item.items()
+                             if k not in {"title", "tags", "created_at", "owner", "rights_note"}})
+            return existing
+        workspace["assets"].append(item)
+        return item
+
+    def list_assets(self, project_id: str, filters=None):
+        filters = filters or {}
+        result = []
+        for item in self.workspaces[project_id]["assets"]:
+            if any(filters.get(key) and item.get(field) != filters[key]
+                   for key, field in (("type", "asset_type"), ("status", "status"),
+                                      ("direction_id", "direction_id"))):
+                continue
+            if filters.get("tag") and filters["tag"] not in item["tags"]:
+                continue
+            query = (filters.get("query") or "").strip().casefold()
+            if query and query not in " ".join([item["title"], *item["tags"], item["rights_note"]]).casefold():
+                continue
+            result.append(deepcopy(item))
+        return result
+
+    def patch_asset(self, project_id: str, asset_id: str, payload):
+        workspace = self.workspaces[project_id]
+        item = next((a for a in workspace["assets"] if a["asset_id"] == asset_id), None)
+        if item is None:
+            return None
+        payload = {k: v for k, v in payload.items()
+                   if k in {"title", "status", "tags", "owner", "rights_note"} and v is not None}
+        target = payload.get("status")
+        if target in {"selected", "published"}:
+            if item["status"] in {"archived", "failed", "stale", "processing"}:
+                raise ValueError("归档、失败、过期或处理中的资产不能设为候选或发布")
+            if item["asset_type"] == "model_glb" and item.get("material_status") != "pbr":
+                raise ValueError("最终三维模型必须是带 PBR 贴图材质的 GLB")
+            if item["asset_type"] == "image":
+                self.select_candidate_version(project_id, item["version_id"])
+        item.update(payload)
+        item["updated_at"] = now_iso()
+        workspace["project"]["updated_at"] = item["updated_at"]
+        if target in {"archived", "failed", "stale"} and item["asset_type"] == "image":
+            version = next((v for v in workspace["versions"] if v["id"] == item["version_id"]), None)
+            if version and workspace["project"].get("candidate_version_id") == version["id"]:
+                workspace["project"]["candidate_version_id"] = None
+                version["status"] = "reviewing"
+        return deepcopy(item)
+
+    def asset_relations(self, project_id: str, asset_id: str):
+        workspace = self.workspaces[project_id]
+        item = next((a for a in workspace["assets"] if a["asset_id"] == asset_id), None)
+        if item is None:
+            return None
+        version = next((v for v in workspace["versions"] if v["id"] == item["version_id"]), None)
+        parent = next((v for v in workspace["versions"]
+                       if version and v["id"] == version.get("parent_version_id")), None)
+        return deepcopy({
+            "asset": item, "version": version, "parent_version": parent,
+            "input_assets": [a for a in workspace["assets"] if a["asset_id"] in item["source_asset_ids"]],
+            "downstream_models": [a for a in workspace["assets"]
+                                  if a["asset_type"] == "model_glb" and asset_id in a["source_asset_ids"]],
+        })
 
     def record_turn(self, project_id: str, turn: dict[str, Any]) -> dict[str, Any]:
         workspace = self.workspaces[project_id]
@@ -267,6 +418,7 @@ class MemoryStore:
         self, project_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         workspace = self.workspaces[project_id]
+        self._guard_generation(workspace, "image")
         now = now_iso()
         source_turn_id = payload.get("source_turn_id")
         change_source_turn = self._change_source_turn(workspace, source_turn_id)
@@ -319,6 +471,8 @@ class MemoryStore:
         self, job_id: str, artifact: dict[str, Any]
     ) -> dict[str, Any]:
         workspace, job = self._job_location(job_id)
+        if job.get("artifact_id") == artifact.get("id") and job.get("version_id"):
+            return job
         if not artifact.get("url") and not artifact.get("path"):
             raise ValueError("图片成果为空")
         change_source_turn = next(
@@ -357,6 +511,10 @@ class MemoryStore:
             message="图片已生成，但基于旧 Brief" if stale else "图片已生成",
             updated_at=now_iso(),
         )
+        registered = self._upsert_asset(workspace, version, artifact, job)
+        if artifact.get("kind") == "model_glb":
+            saved = next(a for a in version["artifacts"] if a["id"] == artifact["id"])
+            saved.update(role=registered["role"], material_status=registered["material_status"])
         if not stale:
             transition_stage(
                 workspace,
@@ -413,6 +571,7 @@ class MemoryStore:
         self, project_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         workspace = self.workspaces[project_id]
+        self._guard_generation(workspace, "rodin")
         version = next(
             (
                 item
@@ -425,6 +584,10 @@ class MemoryStore:
             raise ValueError("三维任务关联的设计版本不存在")
         if workspace["project"].get("candidate_version_id") != version["id"]:
             raise ValueError("请先锁定当前二维版本为候选，再生成三维模型")
+        if any(a["version_id"] == version["id"] and a["asset_type"] == "image"
+               and a["status"] in {"archived", "failed", "stale", "processing"}
+               for a in workspace["assets"]):
+            raise ValueError("当前二维参考资产不可用，请重新锁定候选")
         brief = next(
             item
             for item in workspace["brief_revisions"]
@@ -524,6 +687,8 @@ class MemoryStore:
         version = next(
             item for item in workspace["versions"] if item["id"] == job["version_id"]
         )
+        if job.get("artifact_id") == artifact.get("id"):
+            return job
         version["artifacts"].append(deepcopy(artifact))
         stale = (
             workspace["versions"][-1]["id"] != version["id"]
@@ -535,6 +700,10 @@ class MemoryStore:
             message="三维模型已完成，但关联旧版本" if stale else "三维概念模型已完成",
             updated_at=now_iso(),
         )
+        registered = self._upsert_asset(workspace, version, artifact, job)
+        if artifact.get("kind") == "model_glb":
+            saved = next(a for a in version["artifacts"] if a["id"] == artifact["id"])
+            saved.update(role=registered["role"], material_status=registered["material_status"])
         if not stale:
             transition_stage(
                 workspace,
@@ -575,9 +744,28 @@ class MemoryStore:
         )
         if selected is None:
             return None
+        images = [a for a in workspace["assets"] if a["version_id"] == version_id and a["asset_type"] == "image"]
+        if selected["status"] in {"archived", "discarded"} or any(
+            a["status"] in {"archived", "failed", "stale", "processing"} for a in images
+        ):
+            raise ValueError("归档、失败、过期或处理中的资产不能设为候选")
+        for asset in workspace["assets"]:
+            if asset["asset_type"] == "image" and asset["status"] == "selected":
+                asset.update(status="reviewing", updated_at=now_iso())
+        for asset in images:
+            asset.update(status="selected", updated_at=now_iso())
         for version in workspace["versions"]:
             if version["status"] == "selected":
                 version["status"] = "reviewing"
+        for asset in workspace["assets"]:
+            if (asset["asset_type"] == "model_glb" and asset["version_id"] != version_id
+                and asset["status"] not in {"archived", "failed"}):
+                asset.update(status="stale", role="preview", updated_at=now_iso())
+                old_version = next((v for v in workspace["versions"] if v["id"] == asset["version_id"]), None)
+                if old_version:
+                    for artifact in old_version["artifacts"]:
+                        if artifact["id"] == asset["asset_id"]:
+                            artifact["role"] = "preview"
         selected["status"] = "selected"
         workspace["project"]["candidate_version_id"] = version_id
         transition_stage(
@@ -611,6 +799,10 @@ class MemoryStore:
                 if key in public_artifact_fields
             }
             for artifact in version["artifacts"]
+            if not any(a["asset_id"] == artifact["id"] and
+                       (a["status"] in {"archived", "failed", "stale", "processing"}
+                        or (a["asset_type"] == "model_glb" and a.get("material_status") != "pbr"))
+                       for a in workspace["assets"])
         ]
         culture = [
             {

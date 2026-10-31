@@ -33,6 +33,56 @@ class ProjectState(BaseModel):
     updated_at: str
 
 
+class ProjectCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    product_type: str = ""
+    owner: str = ""
+    collaborators: list[str] = Field(default_factory=list)
+    target_user: str = ""
+    use_scene: str = ""
+
+
+class DirectionCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    concept: str = ""
+    culture_ids: list[str] = Field(default_factory=list)
+    material_ids: list[str] = Field(default_factory=list)
+
+
+AssetStatus = Literal["draft", "reviewing", "selected", "published", "archived",
+                      "processing", "completed", "failed", "stale"]
+
+
+class AssetRecord(BaseModel):
+    asset_id: str
+    asset_type: str
+    project_id: str
+    direction_id: Optional[str] = None
+    version_id: Optional[str] = None
+    title: str
+    status: AssetStatus
+    source_asset_ids: list[str] = Field(default_factory=list)
+    source_turn_id: Optional[str] = None
+    source_culture_ids: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    created_at: str
+    updated_at: str
+    owner: str = ""
+    rights_note: str = ""
+    url: str = ""
+    media_type: str = ""
+    material_status: Optional[str] = None
+    role: Optional[str] = None
+
+
+class AssetPatch(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    status: Optional[AssetStatus] = None
+    tags: Optional[list[str]] = None
+    owner: Optional[str] = None
+    rights_note: Optional[str] = None
+
+
 class DesignDirection(BaseModel):
     id: str
     name: str
