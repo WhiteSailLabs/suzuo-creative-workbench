@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -67,7 +67,7 @@ function generationServer() {
     return response(structuredClone(current))
   })
   vi.stubGlobal('fetch', fetchMock)
-  return { calls, setJobs: (jobs: Workspace['jobs']) => { current = { ...current, jobs } } }
+  return { calls, setCandidate: (id: string) => { current.project.candidate_version_id = id }, setJobs: (jobs: Workspace['jobs']) => { current = { ...current, jobs } } }
 }
 async function send(text: string) {
   await userEvent.type(screen.getByLabelText('描述或修改设计'), text)
@@ -125,14 +125,14 @@ it('blocks generation while activation is pending and retains the original activ
   await open()
   await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
   expect(screen.getByRole('combobox', { name: '当前方向' })).toBeDisabled()
-  expect(await screen.findByText('正在切换方向，请稍候再生成')).toBeInTheDocument()
+  expect(await screen.findByText('正在切换方向，请等待成功激活后再生成')).toBeInTheDocument()
   await send('确认修改并生成新版')
   expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
   rejectActivation({ ok: false, status: 404, json: async () => ({ detail: '方向不存在或不属于当前项目' }) })
   expect(await screen.findByText('方向不存在或不属于当前项目')).toBeInTheDocument()
   await send('确认修改并生成新版')
   expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
-  await screen.findByText('当前方向仅供查看；请切回活动方向后生成')
+  await screen.findByText('请先成功激活当前方向后再生成')
   await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'a')
   await waitFor(() => expect(screen.getByRole('combobox', { name: '当前方向' })).toBeEnabled())
   await send('确认修改并生成新版')
@@ -164,4 +164,64 @@ it('shows a generation gate failure with its actual reason', async () => {
   await open()
   await send('确认修改并生成新版')
   expect(await screen.findByText('请先确认产品功能和保留项')).toBeInTheDocument()
+})
+
+
+it('blocks Rodin and Rodin retry while activation is pending or failed, then restores them after activation succeeds', async () => {
+  const { calls, setCandidate, setJobs } = generationServer()
+  setCandidate('B1')
+  setJobs([{ id: 'failed_rodin', direction_id: 'b', kind: 'rodin', status: 'failed', version_id: 'B1', artifact_id: null, message: '三维失败可重试', prompt: '', updated_at: '' }])
+  const originalFetch = globalThis.fetch
+  let finishActivation!: (value: unknown) => void
+  let failFirst = true
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/directions/b/activate') && failFirst) {
+      failFirst = false
+      return new Promise(resolve => { finishActivation = resolve })
+    }
+    return originalFetch(url, init)
+  }))
+  await open()
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
+  await userEvent.click(screen.getByRole('button', { name: '三维模型' }))
+  await userEvent.click(screen.getByRole('button', { name: '用候选版本生成 3D' }))
+  await userEvent.click(screen.getByRole('button', { name: '重试' }))
+  expect(calls.filter(c => /\/(rodin-jobs|retry)$/.test(c.url))).toHaveLength(0)
+  await act(async () => { finishActivation({ ok: false, status: 404, json: async () => ({ detail: '无法激活 B 方向' }) }) })
+  await screen.findByText('无法激活 B 方向')
+  await userEvent.click(screen.getByRole('button', { name: '用候选版本生成 3D' }))
+  await userEvent.click(screen.getByRole('button', { name: '重试' }))
+  expect(calls.filter(c => /\/(rodin-jobs|retry)$/.test(c.url))).toHaveLength(0)
+  expect(screen.getByText('请先成功激活当前方向后再生成')).toBeInTheDocument()
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'a')
+  await waitFor(() => expect(screen.getByRole('combobox', { name: '当前方向' })).toBeEnabled())
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
+  await waitFor(() => expect(screen.getByRole('combobox', { name: '当前方向' })).toBeEnabled())
+  await userEvent.click(screen.getByRole('button', { name: '用候选版本生成 3D' }))
+  await waitFor(() => expect(calls.filter(c => c.url.endsWith('/rodin-jobs'))).toHaveLength(1))
+  await userEvent.click(screen.getByRole('button', { name: '重试' }))
+  await waitFor(() => expect(calls.filter(c => c.url.endsWith('/retry'))).toHaveLength(1))
+  expect(calls.filter(c => /\/(rodin-jobs|retry)$/.test(c.url)).every(c => c.url.includes('/projects/second/'))).toBe(true)
+})
+
+it('ignores an old activation response after switching projects', async () => {
+  generationServer()
+  const originalFetch = globalThis.fetch
+  const nextWorkspace = { ...structuredClone(workspace), project: { ...workspace.project, id: 'third', name: '新项目', active_direction_id: 'c' }, active_direction_id: 'c', directions: [{ ...workspace.directions![0], id: 'c', name: '新项目方向' }], versions: [version('C1', 'c')] }
+  let finishOldActivation!: (value: unknown) => void
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/projects')) return response([workspace, nextWorkspace].map(w => ({ ...w.project, latest_version_id: 'any', image_count: 1, model_count: 0, pending_count: 0 })))
+    if (url.endsWith('/third')) return response(nextWorkspace)
+    if (url.endsWith('/directions/b/activate')) return new Promise(resolve => { finishOldActivation = resolve })
+    return originalFetch(url, init)
+  }))
+  await open()
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前项目' }), 'third')
+  await screen.findByAltText('C1 二维概念图')
+  await act(async () => { finishOldActivation(response({ ...workspace, project: { ...workspace.project, active_direction_id: 'b' }, active_direction_id: 'b' })) })
+  expect(screen.getByRole('combobox', { name: '当前项目' })).toHaveValue('third')
+  expect(screen.getByRole('combobox', { name: '当前方向' })).toHaveValue('c')
+  expect(screen.getByAltText('C1 二维概念图')).toBeInTheDocument()
+  expect(screen.queryByAltText('B1 二维概念图')).not.toBeInTheDocument()
 })
