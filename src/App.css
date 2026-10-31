@@ -144,3 +144,7 @@
   .viewport-notice{top:62px;left:10px;right:10px;transform:none;max-width:none;align-items:flex-start;flex-direction:column;gap:2px}
   .product-tour-backdrop{padding:12px}.product-tour{padding:16px}.product-tour-body{grid-template-columns:42px 1fr;gap:10px;padding:18px 0}.product-tour-marker{width:38px;height:38px;font-size:14px}
 }
+
+/* Keep provenance and model status below the variable-height control bar. */
+.model-viewer .model-provenance{top:auto;bottom:44px;max-width:calc(100% - 36px);pointer-events:none}
+.model-viewer .model-disclaimer{max-width:calc(100% - 36px)}
