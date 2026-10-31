@@ -231,12 +231,17 @@ class WorkspaceOut(BaseModel):
     assets: list[dict[str, Any]] = Field(default_factory=list)
     reviews: list[dict[str, Any]] = Field(default_factory=list)
     proposals: list[dict[str, Any]] = Field(default_factory=list)
+    proposal_asset_ids: list[str] = Field(default_factory=list)
     brief_revisions: list[BriefRevision] = Field(default_factory=list)
     culture: list[CulturalReference] = Field(default_factory=list)
     turns: list[dict[str, Any]] = Field(default_factory=list)
     versions: list[DesignVersion] = Field(default_factory=list)
     jobs: list[GenerationJob] = Field(default_factory=list)
     stage_gates: list[StageGate] = Field(default_factory=list)
+
+
+class ProposalAssetSelection(BaseModel):
+    proposal_asset_ids: list[str] = Field(default_factory=list)
 
 
 class ChangePatch(BaseModel):

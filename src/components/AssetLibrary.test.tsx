@@ -43,6 +43,56 @@ describe('asset library filters and cards', () => {
 })
 
 describe('asset relations and safe operations', () => {
+  it('refreshes the full asset collection after candidate selection so old image/model become ineligible', async () => {
+    const oldImage = asset({ status: 'reviewing', title: '旧二维' })
+    const newImage = asset({ asset_id: 'image2', title: '新二维', status: 'completed', version_id: 'v3' })
+    const oldModel = { ...model, status: 'completed' as const, title: '旧三维' }
+    const refreshed = [
+      { ...oldImage, status: 'reviewing' as const },
+      { ...newImage, status: 'selected' as const },
+      { ...oldModel, status: 'stale' as const, role: 'preview' },
+    ]
+    const fetcher = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'PATCH') return response({ ...newImage, status: 'selected' })
+      return response(fetcher.mock.calls.length > 1 ? refreshed : [oldImage, oldModel, newImage])
+    })
+    vi.stubGlobal('fetch', fetcher)
+    render(<AssetLibrary {...props} />)
+    const oldCard = await screen.findByRole('article', { name: '旧二维' })
+    await userEvent.click(within(oldCard).getByRole('button', { name: '设为候选' }))
+    expect(await screen.findByRole('article', { name: '旧三维' })).toHaveTextContent('已过期')
+    expect(within(screen.getByRole('article', { name: '旧二维' })).queryByRole('button', { name: '设为候选' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('article', { name: '旧三维' })).queryByRole('button', { name: '加入提案' })).not.toBeInTheDocument()
+    expect(fetcher.mock.calls.filter(([, init]) => !init?.method || init.method === 'GET').length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('renders explicit cultural kind and verification labels from linked source ids only', async () => {
+    const linked = [
+      { id: 'culture1', title: '同名', kind: 'fact' as const, statement: '', source_title: '史料', source_url: '', note: '', verified: true },
+      { id: 'culture2', title: '同名', kind: 'generated' as const, statement: '', source_title: '', source_url: '', note: '', verified: false },
+    ]
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([asset({ source_culture_ids: ['culture1', 'culture2'] })])))
+    render(<AssetLibrary {...props} culture={linked} />)
+    const card = await screen.findByRole('article', { name: '漏景香插' })
+    expect(within(card).getByText(/文化事实/)).toBeInTheDocument()
+    expect(within(card).getByText(/已核验/)).toBeInTheDocument()
+    expect(within(card).getByText(/生成内容/)).toBeInTheDocument()
+    expect(within(card).getByText(/待核验/)).toBeInTheDocument()
+  })
+
+  it('combines all six filters', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([asset({ asset_id: 'match', title: '组合命中', status: 'completed', direction_id: 'd1', source_culture_ids: ['culture1'], material_status: 'ceramic', tags: ['陶瓷'] }), asset({ asset_id: 'miss', title: '组合排除', status: 'reviewing', direction_id: 'd1', source_culture_ids: ['culture1'], material_status: 'metal', tags: ['金属'] })])))
+    render(<AssetLibrary {...props} />)
+    await screen.findByRole('article', { name: '组合命中' })
+    await userEvent.selectOptions(screen.getByLabelText('类型'), 'image')
+    await userEvent.selectOptions(screen.getByLabelText('状态'), 'completed')
+    await userEvent.selectOptions(screen.getByLabelText('方向'), 'd1')
+    await userEvent.selectOptions(screen.getByLabelText('文化元素'), 'culture1')
+    await userEvent.selectOptions(screen.getByLabelText('材质'), 'ceramic')
+    await userEvent.type(screen.getByRole('searchbox', { name: '搜索资产' }), '组合')
+    expect(screen.getByRole('article', { name: '组合命中' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: '组合排除' })).not.toBeInTheDocument()
+  })
   it('traces model inputs, versions, culture and task in an accessible relation view', async () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) => response(url.endsWith('/relations') ? { asset: model, version: versions[1], parent_version: versions[0], input_assets: [asset()], downstream_models: [] } : [asset(), model])))
     render(<AssetLibrary {...props} jobs={[{ id: 'job3d', kind: 'rodin', status: 'completed', version_id: 'v2', artifact_id: 'model1', message: '完成', prompt: '', updated_at: '' }]} />)
@@ -86,10 +136,37 @@ describe('asset relations and safe operations', () => {
     expect(screen.queryByText('已设为候选')).not.toBeInTheDocument()
   })
   it('adds assets to an explicitly session-only proposal selection and uses actual download URLs', async () => {
-    load(); const card = await screen.findByRole('article', { name: '漏景香插' })
+    const fetcher = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => init?.method === 'POST' ? response({ proposal_asset_ids: ['image1'] }) : response([asset(), model]))
+    vi.stubGlobal('fetch', fetcher); render(<AssetLibrary {...props} />); const card = await screen.findByRole('article', { name: '漏景香插' })
     await userEvent.click(within(card).getByRole('button', { name: '加入提案' }))
-    expect(screen.getByText('提案选材（当前会话）：漏景香插')).toBeInTheDocument()
+    expect(await screen.findByText('提案选材：漏景香插')).toBeInTheDocument()
+    expect(fetcher).toHaveBeenCalledWith('http://127.0.0.1:8000/api/workbench/projects/p1/proposal-assets/image1', expect.objectContaining({ method: 'POST' }))
     expect(within(card).getByRole('link', { name: '下载' })).toHaveAttribute('href', 'http://127.0.0.1:8000/api/workbench/assets/image1')
+  })
+
+  it('does not show proposal success when the server rejects selection', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => init?.method === 'POST' ? { ok: false, status: 422, json: async () => ({ detail: '资产不符合提案选材条件' }) } : response([asset()])))
+    render(<AssetLibrary {...props} />)
+    const card = await screen.findByRole('article', { name: '漏景香插' })
+    await userEvent.click(within(card).getByRole('button', { name: '加入提案' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('资产不符合提案选材条件')
+    expect(screen.queryByText('提案选材：漏景香插')).not.toBeInTheDocument()
+  })
+
+  it('uses a native modal for archive confirmation and restores focus after cancel', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) { this.setAttribute('open', '') })
+    HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) { this.removeAttribute('open') })
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response([asset()])))
+    render(<AssetLibrary {...props} />)
+    const card = await screen.findByRole('article', { name: '漏景香插' })
+    await userEvent.click(within(card).getByRole('button', { name: '更多' }))
+    const trigger = within(card).getByRole('button', { name: '归档' })
+    await userEvent.click(trigger)
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled()
+    const dialog = screen.getByRole('alertdialog', { name: '确认归档' })
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    await userEvent.click(within(dialog).getByRole('button', { name: '取消' }))
+    expect(trigger).toHaveFocus()
   })
   it('shows recoverable load and relation errors', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('连接中断')))

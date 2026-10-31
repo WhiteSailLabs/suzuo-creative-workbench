@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
-import { assetDownloadUrl, listAssets, patchAsset } from '../lib/api'
+import { useEffect, useRef, useState } from 'react'
+import { addProposalAsset, assetDownloadUrl, getWorkspace, listAssets, patchAsset } from '../lib/api'
 import { AssetDetailDrawer } from './AssetDetailDrawer'
 import type { AssetLibraryProps, AssetRecord } from '../types/workbench'
 
 export const assetTypeLabels: Record<string, string> = { image: '二维图', model_glb: '三维模型', material: '材质', culture: '文化资料', reference: '参考素材', structure: '结构', conversation: '对话', proposal: '提案' }
 export const assetStatusLabels: Record<string, string> = { draft: '草稿', reviewing: '评审中', selected: '候选', published: '已发布', archived: '已归档', processing: '处理中', completed: '已完成', failed: '失败', stale: '已过期' }
+export const cultureKindLabels: Record<string, string> = { fact: '文化事实', translation: '设计转译', designer_judgment: '设计师判断', generated: '生成内容', to_verify: '待核验' }
 
 export function AssetLibrary({ projectId, projectName, versions, directions, culture, jobs, onAssetsChanged, initialView = 'works' }: AssetLibraryProps) {
   const [busy, setBusy] = useState(false)
@@ -20,20 +21,34 @@ export function AssetLibrary({ projectId, projectName, versions, directions, cul
   const [reload, setReload] = useState(0)
   const [filters, setFilters] = useState({ type: '', status: '', direction: '', culture: '', material: '', query: '' })
   const [selected, setSelected] = useState<AssetRecord | null>(null)
+  const [candidateAssetId, setCandidateAssetId] = useState<string | null>(null)
+  const archiveDialog = useRef<HTMLDialogElement>(null)
+  const archiveTrigger = useRef<HTMLButtonElement>(null)
   useEffect(() => { setView(initialView) }, [initialView])
   useEffect(() => {
     let active = true
-    setLoading(true); setAssets([]); setArchive(null); setMore(null); setProposalAssets([]); setNotice(''); setOperationError(''); setSelected(null); setError('')
-    listAssets(projectId).then(items => { if (active) { if (!Array.isArray(items)) throw new Error('资产列表响应格式无效'); setAssets(items) } }).catch(e => { if (active) setError(e instanceof Error ? e.message : '资产加载失败') }).finally(() => { if (active) setLoading(false) })
+    setLoading(true); setAssets([]); setArchive(null); setMore(null); setProposalAssets([]); setCandidateAssetId(null); setNotice(''); setOperationError(''); setSelected(null); setError('')
+    Promise.all([listAssets(projectId), getWorkspace(projectId)]).then(([items, workspace]) => { if (active) { if (!Array.isArray(items)) throw new Error('资产列表响应格式无效'); setAssets(items); setProposalAssets(Array.isArray(workspace?.proposal_asset_ids) ? workspace.proposal_asset_ids : []) } }).catch(e => { if (active) setError(e instanceof Error ? e.message : '资产加载失败') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [projectId, reload])
+  useEffect(() => {
+    const dialog = archiveDialog.current
+    if (!archive) return
+    if (dialog?.showModal) dialog.showModal()
+    else dialog?.setAttribute('open', '')
+    const focusTarget = dialog?.querySelector<HTMLButtonElement>('[data-autofocus]')
+    focusTarget?.focus()
+    return () => { if (dialog?.open) dialog.close?.() }
+  }, [archive])
   async function changeStatus(a: AssetRecord, status: 'selected' | 'archived') {
     if (busy || a.project_id !== projectId || (status === 'selected' && !canSelectAsset(a, projectId))) return
     setBusy(true); setOperationError(''); setNotice('')
     try {
       const updated = await patchAsset(projectId, a.asset_id, { status })
       if (updated.project_id !== projectId || updated.status !== status) throw new Error('服务器未确认资产状态')
-      setAssets(items => items.map(item => item.asset_id === updated.asset_id ? updated : item))
+      if (status === 'selected') setCandidateAssetId(a.asset_id)
+      const refreshed = status === 'selected' ? await listAssets(projectId) : null
+      setAssets(items => Array.isArray(refreshed) ? refreshed : items.map(item => item.asset_id === updated.asset_id ? updated : item))
       setSelected(current => current?.asset_id === updated.asset_id ? updated : current)
       setArchive(null); setNotice(status === 'selected' ? '已设为候选' : '已归档，保留本地文件'); onAssetsChanged?.()
     } catch (e) { setOperationError(e instanceof Error ? e.message : '操作失败，请重试') }
@@ -52,22 +67,26 @@ export function AssetLibrary({ projectId, projectName, versions, directions, cul
       {select('类型', 'type', local.map(a => a.asset_type), assetTypeLabels)}{select('状态', 'status', local.map(a => a.status), assetStatusLabels)}{select('方向', 'direction', local.flatMap(a => a.direction_id ? [a.direction_id] : []), Object.fromEntries(directions.map(d => [d.id, d.name])))}{select('文化元素', 'culture', local.flatMap(a => a.source_culture_ids), Object.fromEntries(culture.map(c => [c.id, c.title])))}{select('材质', 'material', local.flatMap(a => [...(a.material_status ? [a.material_status] : []), ...a.tags]))}
       <label>搜索资产<input type="search" aria-label="搜索资产" placeholder="名称、标签、权利说明" value={filters.query} onChange={e => setFilters(f => ({ ...f, query: e.target.value }))} /></label>
     </div>
-    {operationError && <p role="alert">{operationError}</p>}{notice && <p role="status">{notice}</p>}{proposalAssets.length > 0 && <p>提案选材（当前会话）：{proposalAssets.map(id => local.find(a => a.asset_id === id)?.title).filter(Boolean).join('、')}</p>}
+    {operationError && <p role="alert">{operationError}</p>}{notice && <p role="status">{notice}</p>}{proposalAssets.length > 0 && <p>提案选材：{proposalAssets.map(id => local.find(a => a.asset_id === id)?.title).filter(Boolean).join('、')}</p>}
     {loading ? <p role="status">正在加载资产…</p> : error ? <div role="alert">资产加载失败：{error}<button onClick={() => setReload(v => v + 1)}>重试</button></div> : !visible.length ? <p>没有符合条件的资产</p> : [...groups].map(([name, items]) => <section key={name}><h2>{name}</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: 16 }}>{items.map(a => {
       const version = versions.find(v => v.id === a.version_id)
-      return <article className="panel-card" key={a.asset_id} aria-label={a.title} style={{ padding: 16 }}><button onClick={() => setSelected(a)} aria-label={`查看${a.title}`} style={{ display: 'block', width: '100%', textAlign: 'left' }}>{a.asset_type === 'image' && a.url && <img src={assetDownloadUrl(a.url)} alt={a.title} style={{ width: '100%', height: 160, objectFit: 'contain' }} />}<strong>{a.title}</strong></button><p>{assetTypeLabels[a.asset_type] ?? a.asset_type} · {version?.label ?? '未关联版本'}</p><p>父版本：{versions.find(v => v.id === version?.parent_version_id)?.label ?? '无'}</p><p>关联三维：{local.filter(m => m.asset_type === 'model_glb' && m.source_asset_ids.includes(a.asset_id)).length}</p><p>{assetStatusLabels[a.status]}</p><p>{a.source_culture_ids.map(id => <span key={id} style={{ marginRight: 8 }}>{culture.find(c => c.id === id)?.title ?? id}</span>)}</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {canSelectAsset(a, projectId) && <button disabled={busy} onClick={() => void changeStatus(a, 'selected')}>设为候选</button>}
-        <button disabled={a.status === 'archived' || a.status === 'failed' || a.status === 'stale' || a.status === 'processing'} onClick={() => setProposalAssets(ids => ids.includes(a.asset_id) ? ids : [...ids, a.asset_id])}>加入提案</button>
+      return <article className="panel-card" key={a.asset_id} aria-label={a.title} style={{ padding: 16 }}><button onClick={() => setSelected(a)} aria-label={`查看${a.title}`} style={{ display: 'block', width: '100%', textAlign: 'left' }}>{a.asset_type === 'image' && a.url && <img src={assetDownloadUrl(a.url)} alt={a.title} style={{ width: '100%', height: 160, objectFit: 'contain' }} />}<strong>{a.title}</strong></button><p>{assetTypeLabels[a.asset_type] ?? a.asset_type} · {version?.label ?? '未关联版本'}</p><p>父版本：{versions.find(v => v.id === version?.parent_version_id)?.label ?? '无'}</p><p>关联三维：{local.filter(m => m.asset_type === 'model_glb' && m.source_asset_ids.includes(a.asset_id)).length}</p><p>{assetStatusLabels[a.status]}</p><p>{a.source_culture_ids.map(id => { const reference = culture.find(c => c.id === id); if (!reference) return null; const label = reference.kind_label ?? cultureKindLabels[reference.kind] ?? reference.kind; return <span key={id} style={{ marginRight: 8 }}><span>{reference.title}</span> · <span>{label}</span> · <span>{reference.verified ? '已核验' : '待核验'}</span></span> })}</p><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {canSelectAsset(a, projectId) && !(a.status === 'reviewing' && candidateAssetId === a.asset_id) && <button disabled={busy} onClick={() => void changeStatus(a, 'selected')}>设为候选</button>}
+        {canAddProposal(a) && <button disabled={busy} onClick={() => { setBusy(true); setOperationError(''); void addProposalAsset(projectId, a.asset_id).then(result => { setProposalAssets(result.proposal_asset_ids); setNotice('已加入提案') }).catch(e => setOperationError(e instanceof Error ? e.message : '加入提案失败')).finally(() => setBusy(false)) }}>加入提案</button>}
         {assetDownloadUrl(a.url) ? <a href={assetDownloadUrl(a.url)} download>下载</a> : <span>暂无下载文件</span>}
         <button aria-expanded={more === a.asset_id} onClick={() => setMore(current => current === a.asset_id ? null : a.asset_id)}>更多</button>
-        {more === a.asset_id && <div><button onClick={() => setSelected(a)}>查看来源</button><button disabled={busy || a.status === 'archived'} onClick={() => setArchive(a)}>归档</button></div>}
+        {more === a.asset_id && <div><button onClick={() => setSelected(a)}>查看来源</button><button ref={archiveTrigger} disabled={busy || a.status === 'archived'} onClick={() => { archiveTrigger.current = document.activeElement as HTMLButtonElement; setArchive(a) }}>归档</button></div>}
       </div></article>
     })}</div></section>)}
     {selected && <AssetDetailDrawer key={selected.asset_id} projectId={projectId} asset={selected} culture={culture} jobs={jobs} onClose={() => setSelected(null)} onOpenAsset={id => { const target = local.find(a => a.asset_id === id); if (target) setSelected(target) }} />}
-    {archive && <dialog open role="alertdialog" aria-modal="true" aria-label="确认归档"><h2>确认归档</h2><p>归档“{archive.title}”？保留本地文件，归档后不能设为候选。</p><button disabled={busy} onClick={() => setArchive(null)}>取消</button><button disabled={busy} onClick={() => void changeStatus(archive, 'archived')}>确认归档</button></dialog>}
+    <dialog ref={archiveDialog} role="alertdialog" aria-modal="true" aria-label="确认归档" onCancel={event => { event.preventDefault(); setArchive(null); queueMicrotask(() => archiveTrigger.current?.focus()) }}><h2>确认归档</h2><p>归档“{archive?.title ?? ''}”？保留本地文件，归档后不能设为候选。</p><button data-autofocus disabled={busy} onClick={() => { setArchive(null); queueMicrotask(() => archiveTrigger.current?.focus()) }}>取消</button><button disabled={busy || !archive} onClick={() => archive && void changeStatus(archive, 'archived')}>确认归档</button></dialog>
   </section></main>
 }
 
 function canSelectAsset(asset: AssetRecord, projectId: string) {
-  return asset.project_id === projectId && !['archived', 'failed', 'stale', 'processing'].includes(asset.status) && (asset.asset_type !== 'model_glb' || asset.material_status === 'pbr') && !!asset.version_id
+  return asset.project_id === projectId && ['reviewing', 'completed', 'selected', 'published'].includes(asset.status) && (asset.asset_type !== 'model_glb' || asset.material_status === 'pbr') && !!asset.version_id
+}
+
+function canAddProposal(asset: AssetRecord) {
+  return !['archived', 'failed', 'stale', 'processing', 'draft'].includes(asset.status)
 }

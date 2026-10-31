@@ -199,6 +199,31 @@ class WorkbenchAssetsTests(unittest.TestCase):
         self.assertEqual(asset['status'], 'stale')
         self.assertEqual(self.client.patch(self.base + '/assets/old_model', json={'status': 'selected'}).status_code, 422)
 
+    def test_proposal_asset_membership_is_project_scoped_and_survives_workspace_reload(self):
+        version = self.image()
+        self.store.select_candidate_version(self.project_id, version['id'])
+        response = self.client.post(self.base + '/proposal-assets/image_one')
+        self.assertEqual(response.status_code, 200)
+        workspace = self.client.get(self.base).json()
+        self.assertEqual(workspace['proposal_asset_ids'], ['image_one'])
+        manifest = self.client.get(self.base + '/manifest').json()
+        self.assertEqual([a['asset_id'] for a in manifest['assets']], ['image_one'])
+        self.assertEqual(self.client.delete(self.base + '/proposal-assets/image_one').status_code, 200)
+        self.assertEqual(self.client.get(self.base).json()['proposal_asset_ids'], [])
+
+    def test_proposal_membership_rejects_unverified_models_and_invalid_assets(self):
+        version = self.image()
+        self.store.select_candidate_version(self.project_id, version['id'])
+        for status in ['draft', 'processing', 'failed', 'stale', 'archived', 'unverified']:
+            asset_id = 'bad_' + status
+            item = dict(self.store.list_assets(self.project_id)[0], asset_id=asset_id, title=asset_id, asset_type='model_glb', status='draft' if status == 'unverified' else status, material_status='unverified', role='preview', source_asset_ids=['image_one'])
+            self.store.workspaces[self.project_id]['assets'].append(item)
+            self.store.workspaces[self.project_id]['versions'][-1]['artifacts'].append({'id': asset_id, 'kind': 'model_glb', 'url': '/'+asset_id})
+            self.assertEqual(self.client.post(self.base + '/proposal-assets/' + asset_id).status_code, 422)
+        self.assertEqual(self.client.post(self.base + '/proposal-assets/image_one').status_code, 200)
+        self.store.workspaces[self.project_id]['assets'][0]['status'] = 'stale'
+        self.assertEqual(self.client.get(self.base).json()['proposal_asset_ids'], [])
+
     def glb(self, directory, document=None):
         if document is None:
             document = {'asset': {'version': '2.0'}, 'meshes': [{'primitives': [{'material': 0}]}], 'materials': [{'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}}}], 'textures': [{'source': 0}], 'images': [{'bufferView': 0, 'mimeType': 'image/png'}], 'bufferViews': [{'buffer': 0, 'byteLength': 4}], 'buffers': [{'byteLength': 4}]}

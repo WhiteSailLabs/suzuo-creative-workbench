@@ -82,7 +82,7 @@ def create_seed_workspace() -> dict[str, Any]:
             "culture_ids": [entry["id"] for entry in seed_cultural_entries()],
             "material_ids": [], "created_at": created_at, "updated_at": created_at,
         }],
-        "assets": [], "reviews": [], "proposals": [],
+        "assets": [], "reviews": [], "proposals": [], "proposal_asset_ids": [],
         "project": {
             "id": project_id,
             "name": "苏州园林 · 漏景香插",

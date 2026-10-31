@@ -117,6 +117,19 @@ class WorkbenchReviewsTests(unittest.TestCase):
             self.assertEqual(asset['version_label'], 'V1')
             self.assertIn('source_asset_ids', asset)
 
+    def test_explicit_proposal_asset_ids_drive_proposal_and_manifest(self):
+        self.select()
+        template = self.ws['assets'][0]
+        from copy import deepcopy
+        self.ws['assets'].append({**deepcopy(template), 'asset_id': 'unselected', 'title': '未选资产', 'status': 'selected'})
+        self.version['artifacts'].append({'id': 'unselected', 'kind': 'image', 'url': '/unselected.png'})
+        self.assertEqual(self.client.post(self.base + '/proposal-assets/image_review').status_code, 200)
+        proposal = self.client.get(self.base + '/proposal?audience=internal')
+        self.assertEqual(proposal.status_code, 200)
+        self.assertEqual([a['id'] for a in proposal.json()['version']['artifacts']], ['image_review'])
+        manifest = self.client.get(self.base + '/manifest').json()
+        self.assertEqual([a['asset_id'] for a in manifest['assets']], ['image_review'])
+
     def test_manifest_history_does_not_reintroduce_excluded_artifacts(self):
         self.select()
         self.version['artifacts'].append({'id': 'orphan', 'kind': 'model_glb', 'url': '/secret.glb'})

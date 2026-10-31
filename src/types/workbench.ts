@@ -15,7 +15,7 @@ export type GenerationJob = { id: string; direction_id?: string | null; changes?
 // Optional v2 additions allow the existing 1.0 workspace/test fixtures to remain readable.
 export type Workspace = {
   project: ProjectState
-  active_direction_id?: string | null; directions?: DesignDirection[]; assets?: AssetRecord[]; reviews?: ReviewRecord[]; proposals?: Record<string, unknown>[]
+  active_direction_id?: string | null; directions?: DesignDirection[]; assets?: AssetRecord[]; reviews?: ReviewRecord[]; proposals?: Record<string, unknown>[]; proposal_asset_ids?: string[]
   brief_revisions: BriefRevision[]; culture: CulturalReference[]; turns: ConversationTurn[]; versions: DesignVersion[]; jobs: GenerationJob[]
   stage_gates: Array<{ stage: WorkbenchStage; status: StageStatus; reason: string; updated_at: string }>
 }

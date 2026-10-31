@@ -105,7 +105,7 @@ class MemoryStore:
         workspace = {
             "project": project, "active_direction_id": None,
             "directions": [], "culture": [], "assets": [], "reviews": [],
-            "proposals": [], "turns": [], "versions": [], "jobs": [],
+            "proposals": [], "proposal_asset_ids": [], "turns": [], "versions": [], "jobs": [],
             "brief_revisions": [{
                 "revision": 0, "confirmed": {}, "assumptions": {},
                 "conflicts": [], "missing": [], "source_turn_id": None,
@@ -149,7 +149,10 @@ class MemoryStore:
         return workspace
 
     def workspace_for_project(self, project_id: str) -> dict[str, Any] | None:
-        return self.workspaces.get(project_id)
+        workspace = self.workspaces.get(project_id)
+        if workspace is not None:
+            self._prune_proposal_asset_ids(workspace)
+        return workspace
 
     @staticmethod
     def _has_pbr(artifact: dict[str, Any]) -> bool:
@@ -289,7 +292,54 @@ class MemoryStore:
             if version and workspace["project"].get("candidate_version_id") == version["id"]:
                 workspace["project"]["candidate_version_id"] = None
                 version["status"] = "reviewing"
+        self._prune_proposal_asset_ids(workspace)
         return deepcopy(item)
+
+    @staticmethod
+    def _proposal_asset_allowed(workspace, item: dict[str, Any]) -> bool:
+        candidate_id = workspace["project"].get("candidate_version_id")
+        if not candidate_id or item.get("version_id") != candidate_id:
+            return False
+        if item.get("status") not in {"selected", "published"}:
+            return False
+        if item.get("asset_type") == "image":
+            return True
+        if item.get("asset_type") != "model_glb":
+            return False
+        if item.get("material_status") != "pbr" or item.get("role") != "final":
+            return False
+        candidate_images = {
+            asset["asset_id"] for asset in workspace["assets"]
+            if asset.get("version_id") == candidate_id
+            and asset.get("asset_type") == "image"
+            and asset.get("status") in {"selected", "published"}
+        }
+        return bool(candidate_images.intersection(item.get("source_asset_ids", [])))
+
+    def _prune_proposal_asset_ids(self, workspace) -> list[str]:
+        current = list(workspace.setdefault("proposal_asset_ids", []))
+        valid = {item["asset_id"] for item in workspace["assets"] if self._proposal_asset_allowed(workspace, item)}
+        workspace["proposal_asset_ids"] = [asset_id for asset_id in current if asset_id in valid]
+        return list(workspace["proposal_asset_ids"])
+
+    def add_proposal_asset(self, project_id: str, asset_id: str) -> dict[str, Any]:
+        workspace = self.workspaces[project_id]
+        self._prune_proposal_asset_ids(workspace)
+        item = next((asset for asset in workspace["assets"] if asset["asset_id"] == asset_id), None)
+        if item is None:
+            raise KeyError("资产不存在或不属于当前项目")
+        if not self._proposal_asset_allowed(workspace, item):
+            raise ValueError("资产不符合当前候选提案选材条件")
+        if asset_id not in workspace["proposal_asset_ids"]:
+            workspace["proposal_asset_ids"].append(asset_id)
+        return {"proposal_asset_ids": list(workspace["proposal_asset_ids"])}
+
+    def remove_proposal_asset(self, project_id: str, asset_id: str) -> dict[str, Any]:
+        workspace = self.workspaces[project_id]
+        ids = self._prune_proposal_asset_ids(workspace)
+        if asset_id in ids:
+            workspace["proposal_asset_ids"] = [item for item in ids if item != asset_id]
+        return {"proposal_asset_ids": list(workspace["proposal_asset_ids"])}
 
     def asset_relations(self, project_id: str, asset_id: str):
         workspace = self.workspaces[project_id]
@@ -855,6 +905,7 @@ class MemoryStore:
                     for artifact in old_version["artifacts"]:
                         if artifact["id"] == asset["asset_id"]:
                             artifact["role"] = "preview"
+        self._prune_proposal_asset_ids(workspace)
         selected["status"] = "selected"
         workspace["project"]["candidate_version_id"] = version_id
         transition_stage(
@@ -917,6 +968,13 @@ class MemoryStore:
                   and a.get("material_status") == "pbr" and a.get("role") == "final"
                   and image_ids.intersection(a.get("source_asset_ids", []))]
         return images + models
+
+    def _proposal_assets(self, workspace):
+        selected_ids = self._prune_proposal_asset_ids(workspace)
+        if selected_ids:
+            by_id = {asset["asset_id"]: asset for asset in workspace["assets"]}
+            return [by_id[asset_id] for asset_id in selected_ids if asset_id in by_id]
+        return self._deliverable_assets(workspace)
 
     def stage_gate_status(self, project_id, action, context=None):
         workspace = self.workspaces[project_id]
@@ -1005,7 +1063,7 @@ class MemoryStore:
         if not gate["allowed"]:
             raise StageGateConflict(gate)
         workspace = self.workspaces[project_id]
-        assets = self._deliverable_assets(workspace)
+        assets = self._proposal_assets(workspace)
         versions = {v["id"]: v for v in workspace["versions"]}
         safe_fields = {"asset_id", "asset_type", "project_id", "direction_id", "version_id", "title", "status", "source_asset_ids", "source_culture_ids", "url", "media_type", "material_status", "role"}
         history_fields = {"id", "label", "parent_version_id", "brief_revision", "changed_fields", "preserved_fields", "constraints", "status", "created_at"}
@@ -1035,7 +1093,7 @@ class MemoryStore:
         gate = self.stage_gate_status(project_id, "customer_proposal" if audience == "customer" else "internal_proposal")
         if not gate["allowed"]:
             raise StageGateConflict(gate)
-        eligible = {a["asset_id"] for a in self._deliverable_assets(workspace)}
+        eligible = {a["asset_id"] for a in self._proposal_assets(workspace)}
         public_artifact_fields = {"id", "kind", "url", "media_type", "role", "disclaimer"}
         artifacts = [{**{key: value for key, value in artifact.items() if key in public_artifact_fields},
                       "version_id": version["id"], "version_label": version["label"],

@@ -34,6 +34,7 @@ from .schemas import (
     ImageJobCreate,
     InterpretedTurn,
     RodinJobCreate,
+    ProposalAssetSelection,
     WorkspaceOut,
 )
 from .store import GenerationConflict, StageGateConflict, MemoryStore
@@ -215,6 +216,23 @@ async def patch_workbench_asset(project_id: str, asset_id: str, payload: AssetPa
     if item is None:
         raise HTTPException(404, "资产不存在")
     return item
+
+
+@app.post("/api/workbench/projects/{project_id}/proposal-assets/{asset_id}", response_model=ProposalAssetSelection)
+async def add_workbench_proposal_asset(project_id: str, asset_id: str):
+    require_project(project_id)
+    try:
+        return store.add_proposal_asset(project_id, asset_id)
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.delete("/api/workbench/projects/{project_id}/proposal-assets/{asset_id}", response_model=ProposalAssetSelection)
+async def remove_workbench_proposal_asset(project_id: str, asset_id: str):
+    require_project(project_id)
+    return store.remove_proposal_asset(project_id, asset_id)
 
 
 @app.get("/api/workbench/projects/{project_id}/assets/{asset_id}/relations")
