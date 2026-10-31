@@ -48,6 +48,12 @@ class GenerationConflict(ValueError):
     pass
 
 
+class StageGateConflict(ValueError):
+    def __init__(self, detail):
+        self.detail = detail
+        super().__init__(detail["reason"])
+
+
 class MemoryStore:
     """Single-user in-memory store for the cultural-creative MVP."""
 
@@ -69,6 +75,7 @@ class MemoryStore:
             pending += sum(entry["kind"] == "to_verify" or
                            (entry["kind"] == "fact" and not entry.get("verified"))
                            for entry in workspace["culture"])
+            pending += sum(r["status"] in {"pending", "needs_changes"} for r in workspace["reviews"])
             cards.append({
                 **deepcopy(workspace["project"]),
                 "latest_version_id": latest["id"] if latest else None,
@@ -786,6 +793,8 @@ class MemoryStore:
         if selected is None:
             return None
         images = [a for a in workspace["assets"] if a["version_id"] == version_id and a["asset_type"] == "image"]
+        if not images or not any(a.get("kind") == "image" and a.get("id") in {i["asset_id"] for i in images} for a in selected["artifacts"]):
+            raise ValueError("请先完成二维图像生成，再锁定候选")
         if selected["status"] in {"archived", "discarded"} or any(
             a["status"] in {"archived", "failed", "stale", "processing"} for a in images
         ):
@@ -817,7 +826,159 @@ class MemoryStore:
         )
         return selected
 
-    def proposal_for_project(self, project_id: str) -> dict[str, Any] | None:
+    def create_review(self, project_id, payload):
+        workspace = self.workspaces[project_id]
+        version = next((v for v in workspace["versions"] if v["id"] == payload["version_id"]), None)
+        if version is None:
+            raise ValueError("评审版本不属于当前项目")
+        direction_id = version.get("direction_id")
+        if payload.get("direction_id") and payload["direction_id"] != direction_id:
+            raise ValueError("评审方向与版本不一致")
+        if payload.get("asset_id") and not any(
+            a["asset_id"] == payload["asset_id"] and a["version_id"] == version["id"]
+            for a in workspace["assets"]
+        ):
+            raise ValueError("评审资产与版本不一致")
+        now = now_iso()
+        review = {**deepcopy(payload), "id": new_id("review"), "project_id": project_id,
+                  "direction_id": direction_id, "status": "pending", "created_at": now, "updated_at": now}
+        workspace["reviews"].append(review)
+        return deepcopy(review)
+
+    def resolve_review(self, project_id, review_id, payload):
+        workspace = self.workspaces[project_id]
+        review = next((r for r in workspace["reviews"] if r["id"] == review_id), None)
+        if review is None:
+            return None
+        if review["status"] != "pending":
+            raise GenerationConflict("评审已处理，请创建新一轮评审")
+        if payload["status"] not in {"passed", "needs_changes", "alternative", "rejected"}:
+            raise ValueError("无效评审状态")
+        if payload["status"] == "passed":
+            gate = self.stage_gate_status(project_id, "internal_review", {"version_id": review["version_id"]})
+            if not gate["allowed"]:
+                raise StageGateConflict(gate)
+        review.update({k: v for k, v in payload.items() if k in {"status", "comment"} and v is not None})
+        review["updated_at"] = now_iso()
+        return deepcopy(review)
+
+    def _deliverable_assets(self, workspace):
+        candidate_id = workspace["project"].get("candidate_version_id")
+        version = next((v for v in workspace["versions"] if v["id"] == candidate_id), None)
+        if not version or version["status"] != "selected":
+            return []
+        artifact_ids = {a["id"] for a in version["artifacts"]}
+        images = [a for a in workspace["assets"] if a["version_id"] == candidate_id
+                  and a["asset_id"] in artifact_ids and a["asset_type"] == "image"
+                  and a["status"] in {"selected", "published"}]
+        image_ids = {a["asset_id"] for a in images}
+        models = [a for a in workspace["assets"] if a["version_id"] == candidate_id
+                  and a["asset_id"] in artifact_ids and a["asset_type"] == "model_glb"
+                  and a["status"] in {"selected", "published"}
+                  and a.get("material_status") == "pbr" and a.get("role") == "final"
+                  and image_ids.intersection(a.get("source_asset_ids", []))]
+        return images + models
+
+    def stage_gate_status(self, project_id, action, context=None):
+        workspace = self.workspaces[project_id]
+        context = context or {}
+        missing = []
+        version = next((v for v in workspace["versions"] if v["id"] == context.get("version_id", workspace["project"].get("candidate_version_id"))), None)
+        brief = workspace["brief_revisions"][-1]
+        values = {**brief.get("assumptions", {}), **brief.get("confirmed", {})}
+        project = workspace["project"]
+        guidance = "在版本详情补充来源、本轮变化和限制"
+        if action == "generate_image":
+            known = [values.get("product_type") or project.get("product_type"),
+                     values.get("use_scene") or project.get("use_scene"),
+                     values.get("target_user") or project.get("target_user")]
+            if sum(bool(v) for v in known) < 2:
+                missing.append("brief_direction_scene_or_target")
+            if brief.get("conflicts"):
+                missing.append("unresolved_conflicts")
+            guidance = "在设计 Brief 补齐产品方向、使用场景或目标中至少两项并解决冲突"
+        elif action == "modify_image":
+            if not version:
+                missing.append("base_version")
+            if not context.get("changes"):
+                missing.append("changes")
+            if not context.get("preserve"):
+                missing.append("preserve")
+            guidance = "在工作台选择基础版本并说明变化和至少一个保留项"
+        elif action == "lock_candidate":
+            images = [a for a in workspace["assets"] if version and a["version_id"] == version["id"] and a["asset_type"] == "image"]
+            if not images or any(a["status"] not in {"completed", "reviewing", "selected", "published"} for a in images):
+                missing.append("completed_image")
+            if not context.get("confirmed"):
+                missing.append("user_confirmation")
+            guidance = "在作品详情确认已完成的二维图并锁定候选"
+        elif action == "generate_rodin":
+            if not version or version["id"] != project.get("candidate_version_id"):
+                missing.append("locked_candidate")
+            image_ids = {a["asset_id"] for a in self._deliverable_assets(workspace) if a["asset_type"] == "image"}
+            if not version or not any(a["id"] in image_ids and a.get("path") and Path(a["path"]).is_file() for a in version["artifacts"]):
+                missing.append("local_primary_image")
+            if context.get("input_mode", "image") not in {"image", "text"}:
+                missing.append("input_mode")
+            guidance = "在工作台锁定候选并导入有效本地主图，确认输入模式与来源"
+        elif action == "internal_review":
+            assets = [a for a in workspace["assets"] if version and a["version_id"] == version["id"]]
+            asset_ids = {a["asset_id"] for a in workspace["assets"]}
+            if (not version or not assets
+                or any(not any(a["id"] == item["asset_id"] for a in version["artifacts"]) for item in assets)
+                or any(source not in asset_ids for item in assets for source in item.get("source_asset_ids", []))
+                or any(item["asset_type"] == "model_glb" and not item.get("source_asset_ids") for item in assets)):
+                missing.append("traceable_assets")
+            if not version or not version.get("changed_fields"):
+                missing.append("changed_fields")
+            if not version or not version.get("constraints"):
+                missing.append("constraints")
+        elif action in {"internal_proposal", "customer_proposal"}:
+            if not any(a["asset_type"] == "image" for a in self._deliverable_assets(workspace)):
+                missing.append("selected_image")
+            if any(not c.get("kind") or "verified" not in c for c in workspace["culture"]):
+                missing.append("typed_culture")
+            if action == "customer_proposal" and any(c["kind"] == "fact" and not c.get("verified") for c in workspace["culture"]):
+                missing.append("verified_culture")
+            guidance = "在作品详情锁定可用二维候选，在文化依据中补齐类型并核验对外文化事实"
+        else:
+            raise ValueError("未知阶段动作")
+        return {"stage": action, "allowed": not missing, "missing": missing,
+                "reason": "缺少阶段必填信息：" + "、".join(missing) if missing else "阶段条件已满足",
+                "action": guidance if missing else "可以继续"}
+
+    def _proposal_culture(self, project_id, audience):
+        entries = (self.workspaces[project_id]["culture"] if audience == "internal"
+                   else self.customer_safe_culture(project_id))
+        fields = {"id", "kind", "title", "statement", "source_title", "source_url", "verified"}
+        result = []
+        for entry in entries:
+            item = {k: deepcopy(v) for k, v in entry.items() if k in fields}
+            if audience == "internal" and entry["kind"] == "fact" and not entry.get("verified"):
+                item.update(kind="to_verify", original_kind="fact", warning="待核验，不可作为确定文化事实")
+            result.append(item)
+        return result
+
+    def asset_manifest(self, project_id, audience="internal"):
+        if audience not in {"internal", "customer"}:
+            raise ValueError("未知提案受众")
+        gate = self.stage_gate_status(project_id, audience + "_proposal")
+        if not gate["allowed"]:
+            raise StageGateConflict(gate)
+        workspace = self.workspaces[project_id]
+        assets = self._deliverable_assets(workspace)
+        versions = {v["id"]: v for v in workspace["versions"]}
+        safe_fields = {"asset_id", "asset_type", "project_id", "direction_id", "version_id", "title", "status", "source_asset_ids", "source_culture_ids", "url", "media_type", "material_status", "role"}
+        history_fields = {"id", "label", "parent_version_id", "brief_revision", "changed_fields", "preserved_fields", "constraints", "status", "created_at"}
+        candidate = versions[workspace["project"]["candidate_version_id"]]
+        brief = next(b for b in workspace["brief_revisions"] if b["revision"] == candidate["brief_revision"])
+        return {"project_id": project_id, "audience": audience,
+                "candidate_version_id": candidate["id"],
+                "assets": [{**{k: deepcopy(v) for k, v in a.items() if k in safe_fields}, "version_label": versions[a["version_id"]]["label"]} for a in assets],
+                "brief": deepcopy(brief), "culture_sources": self._proposal_culture(project_id, audience),
+                "version_history": [{k: deepcopy(v) for k, v in version.items() if k in history_fields} for version in workspace["versions"]]}
+
+    def proposal_for_project(self, project_id: str, audience: str | None = None) -> dict[str, Any] | None:
         workspace = self.workspaces[project_id]
         candidate_id = workspace["project"].get("candidate_version_id")
         if not candidate_id:
@@ -830,36 +991,25 @@ class MemoryStore:
             for item in workspace["brief_revisions"]
             if item["revision"] == version["brief_revision"]
         )
-        public_artifact_fields = {
-            "id", "kind", "url", "media_type", "role", "disclaimer"
-        }
-        artifacts = [
-            {
-                key: value
-                for key, value in artifact.items()
-                if key in public_artifact_fields
-            }
-            for artifact in version["artifacts"]
-            if not any(a["asset_id"] == artifact["id"] and
-                       (a["status"] in {"archived", "failed", "stale", "processing"}
-                        or (a["asset_type"] == "model_glb" and a.get("material_status") != "pbr"))
-                       for a in workspace["assets"])
-        ]
-        culture = [
-            {
-                key: item.get(key, "")
-                for key in (
-                    "id", "kind", "title", "statement", "source_title", "source_url"
-                )
-            }
-            for item in self.customer_safe_culture(project_id)
-        ]
+        if audience not in {None, "internal", "customer"}:
+            raise ValueError("未知提案受众")
+        gate = self.stage_gate_status(project_id, "customer_proposal" if audience == "customer" else "internal_proposal")
+        if not gate["allowed"]:
+            raise StageGateConflict(gate)
+        eligible = {a["asset_id"] for a in self._deliverable_assets(workspace)}
+        public_artifact_fields = {"id", "kind", "url", "media_type", "role", "disclaimer"}
+        artifacts = [{**{key: value for key, value in artifact.items() if key in public_artifact_fields},
+                      "version_id": version["id"], "version_label": version["label"],
+                      "source_asset_ids": next(a["source_asset_ids"] for a in workspace["assets"] if a["asset_id"] == artifact["id"])}
+                     for artifact in version["artifacts"] if artifact["id"] in eligible]
+        culture = self._proposal_culture(project_id, audience)
         return {
             "project": {
                 "id": workspace["project"]["id"],
                 "name": workspace["project"]["name"],
                 "product_type": workspace["project"]["product_type"],
             },
+            "audience": audience or "customer",
             "brief": deepcopy(brief["confirmed"]),
             "culture": culture,
             "version": {

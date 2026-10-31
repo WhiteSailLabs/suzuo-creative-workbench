@@ -4,7 +4,7 @@ import base64
 import binascii
 import secrets
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Literal
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +15,9 @@ from .intent import TextInterpretationProvider, interpret_turn_with_provider
 from .providers.image import OpenAICompatibleImageProvider
 from .providers.rodin import RodinProvider
 from .schemas import (
+    ReviewCreate,
+    ReviewResolve,
+    ReviewRecord,
     AssetRecord,
     AssetPatch,
     ProjectCreate,
@@ -32,7 +35,7 @@ from .schemas import (
     RodinJobCreate,
     WorkspaceOut,
 )
-from .store import GenerationConflict, MemoryStore
+from .store import GenerationConflict, StageGateConflict, MemoryStore
 
 
 app = FastAPI(title=settings.app_name, version="0.2.0")
@@ -451,13 +454,60 @@ async def select_workbench_candidate(
     return version
 
 
+@app.post("/api/workbench/projects/{project_id}/reviews", response_model=ReviewRecord, status_code=201)
+async def create_workbench_review(project_id: str, payload: ReviewCreate):
+    require_project(project_id)
+    try:
+        return store.create_review(project_id, payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.patch("/api/workbench/projects/{project_id}/reviews/{review_id}", response_model=ReviewRecord)
+async def resolve_workbench_review(project_id: str, review_id: str, payload: ReviewResolve):
+    require_project(project_id)
+    try:
+        review = store.resolve_review(project_id, review_id, payload.model_dump(exclude_unset=True))
+    except StageGateConflict as exc:
+        raise HTTPException(409, exc.detail) from exc
+    except GenerationConflict as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    if review is None:
+        raise HTTPException(404, "评审不存在")
+    return review
+
+
+@app.get("/api/workbench/projects/{project_id}/stage-gates/{action}")
+async def workbench_stage_gate(project_id: str, action: str, version_id: Optional[str] = None,
+                               confirmed: bool = False, input_mode: str = "image"):
+    require_project(project_id)
+    try:
+        return store.stage_gate_status(project_id, action, {"version_id": version_id, "confirmed": confirmed, "input_mode": input_mode} if version_id else {"confirmed": confirmed, "input_mode": input_mode})
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.get("/api/workbench/projects/{project_id}/manifest")
+async def workbench_manifest(project_id: str, audience: Literal["internal", "customer"] = "internal"):
+    require_project(project_id)
+    try:
+        return store.asset_manifest(project_id, audience)
+    except StageGateConflict as exc:
+        raise HTTPException(409, exc.detail) from exc
+
+
 @app.get("/api/workbench/projects/{project_id}/proposal")
-async def get_workbench_proposal(project_id: str) -> dict[str, Any]:
+async def get_workbench_proposal(project_id: str, audience: Optional[Literal["internal", "customer"]] = None) -> dict[str, Any]:
     if store.workspace_for_project(project_id) is None:
         raise HTTPException(404, "文创项目不存在")
-    proposal = store.proposal_for_project(project_id)
+    try:
+        proposal = store.proposal_for_project(project_id, audience)
+    except StageGateConflict as exc:
+        raise HTTPException(409, exc.detail) from exc
     if proposal is None:
-        raise HTTPException(409, "请先锁定候选版本")
+        raise HTTPException(409, store.stage_gate_status(project_id, "customer_proposal" if audience == "customer" else "internal_proposal"))
     return proposal
 
 

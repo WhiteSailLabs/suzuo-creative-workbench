@@ -249,3 +249,27 @@ class InterpretedTurn(BaseModel):
     interpreter_mode: Literal["provider", "fallback"] = "fallback"
     correction_of: Optional[str] = None
     created_at: str
+
+
+ReviewStatus = Literal["pending", "passed", "needs_changes", "alternative", "rejected"]
+
+
+class ReviewCreate(BaseModel):
+    version_id: str
+    asset_id: Optional[str] = None
+    direction_id: Optional[str] = None
+    region: str = "整体"
+    comment: str = Field(min_length=1, max_length=5000)
+
+
+class ReviewResolve(BaseModel):
+    status: Literal["passed", "needs_changes", "alternative", "rejected"]
+    comment: Optional[str] = Field(default=None, min_length=1, max_length=5000)
+
+
+class ReviewRecord(ReviewCreate):
+    id: str
+    project_id: str
+    status: ReviewStatus
+    created_at: str
+    updated_at: str
