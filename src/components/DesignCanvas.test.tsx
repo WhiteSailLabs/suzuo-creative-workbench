@@ -2,14 +2,14 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { DesignCanvas } from './DesignCanvas'
-import type { DesignVersion, GenerationJob } from '../types/workbench'
+import type { AssetRecord, DesignDirection, DesignVersion, GenerationJob } from '../types/workbench'
 
 vi.mock('./ModelViewer', () => ({
   ModelViewer: () => <div data-testid="model-viewer">3D viewer</div>,
 }))
 
 const version: DesignVersion = {
-  id: 'version_v2', label: 'V2', parent_version_id: 'version_v1', brief_revision: 2,
+  id: 'version_v2', direction_id: 'dir_a', label: 'V2', parent_version_id: 'version_v1', brief_revision: 2,
   source_turn_id: 'turn_2', changed_fields: { hollow_structure: 'simplified' },
   preserved_fields: ['leak_view'], constraints: ['stable_base'], status: 'draft',
   created_at: '2026-10-30T00:00:00Z',
@@ -18,6 +18,9 @@ const version: DesignVersion = {
     { id: 'glb_1', kind: 'concept_model', media_type: 'model/gltf-binary', disclaimer: '概念模型，不是生产 CAD', input_mode: 'image', reference_artifact_ids: ['image_1'], consistency_status: 'pending' },
   ],
 }
+
+const sourceDirection: DesignDirection = { id: 'dir_a', name: '漏景', concept: '', status: 'draft', culture_ids: ['culture'], material_ids: [], created_at: '', updated_at: '' }
+const sourceAsset: AssetRecord = { asset_id: 'image_1', asset_type: 'image', project_id: 'project', direction_id: 'dir_a', version_id: version.id, title: '', status: 'draft', source_asset_ids: [], source_turn_id: null, source_culture_ids: ['culture'], tags: [], created_at: '', updated_at: '', owner: '', rights_note: '', url: '', media_type: '', material_status: null, role: null }
 
 describe('DesignCanvas', () => {
   it('shows image, 3D concept disclaimer, and version changes', async () => {
@@ -149,10 +152,34 @@ it('offers all four modes, a 2d return, comparison changes and source relations'
 })
 
 it('traces culture and input assets through a version to jobs and proposals', async () => {
-  render(<DesignCanvas versions={[version]} jobs={[{ id: 'job_source', kind: 'image', status: 'completed', version_id: version.id, artifact_id: 'image_1', prompt: '', message: '完成', updated_at: '' }]} selectedVersionId={version.id} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} culture={[{ id: 'culture', kind: 'translation', title: '漏景来源', statement: '', source_title: '', source_url: '', note: '', verified: true }]} proposals={[{ id: 'proposal_1', version_id: version.id }]} />)
+  render(<DesignCanvas versions={[version]} jobs={[{ id: 'job_source', kind: 'image', status: 'completed', version_id: version.id, artifact_id: 'image_1', prompt: '', message: '完成', updated_at: '' }]} selectedVersionId={version.id} candidateVersionId={null} onSelectVersion={vi.fn()} onLockCandidate={vi.fn()} assets={[sourceAsset]} direction={sourceDirection} culture={[{ id: 'culture', kind: 'translation', title: '漏景来源', statement: '', source_title: '', source_url: '', note: '', verified: true }]} proposals={[{ id: 'proposal_1', version_id: version.id }]} />)
   await userEvent.click(screen.getByRole('button', { name: '来源关系' }))
   const chain = screen.getByRole('region', { name: '来源链' })
   expect(chain).toHaveTextContent('漏景来源')
   expect(chain).toHaveTextContent('job_source')
   expect(chain).toHaveTextContent('proposal_1')
+})
+
+
+it('only attributes explicitly recorded culture from this version and direction', async () => {
+  const culture = [
+    { id: 'culture', kind: 'fact' as const, title: '历史漏景事实', statement: '', source_title: '', source_url: '', note: '', verified: true },
+    { id: 'later', kind: 'translation' as const, title: '后增未关联资料', statement: '', source_title: '', source_url: '', note: '', verified: true },
+    { id: 'other', kind: 'fact' as const, title: '其他方向文化', statement: '', source_title: '', source_url: '', note: '', verified: true },
+  ]
+  const props = { versions: [version], jobs: [], selectedVersionId: version.id, candidateVersionId: null, onSelectVersion: vi.fn(), onLockCandidate: vi.fn(), culture, direction: { ...sourceDirection, culture_ids: ['culture', 'later'] } }
+  const { rerender } = render(<DesignCanvas {...props} assets={[{ ...sourceAsset, source_culture_ids: ['culture', 'other'] }]} />)
+  await userEvent.click(screen.getByRole('button', { name: '来源关系' }))
+  const chain = screen.getByRole('region', { name: '来源链' })
+  expect(chain).toHaveTextContent('历史漏景事实')
+  expect(chain).not.toHaveTextContent('后增未关联资料')
+  expect(chain).not.toHaveTextContent('其他方向文化')
+  expect(chain).toHaveTextContent('文化事实')
+  rerender(<DesignCanvas {...props} assets={[{ ...sourceAsset, source_culture_ids: [] }]} />)
+  expect(chain).toHaveTextContent('未记录文化来源')
+  expect(chain).not.toHaveTextContent('历史漏景事实')
+  rerender(<DesignCanvas {...props} assets={[{ ...sourceAsset, version_id: 'different_version' }]} />)
+  expect(chain).toHaveTextContent('未记录文化来源')
+  rerender(<DesignCanvas {...props} assets={[sourceAsset]} direction={undefined} />)
+  expect(chain).toHaveTextContent('未记录文化来源')
 })

@@ -1,4 +1,8 @@
 import unittest
+from copy import deepcopy
+from unittest.mock import patch
+from fastapi.testclient import TestClient
+from app.main import app
 
 from app import cultural_workbench
 from pydantic import ValidationError
@@ -214,6 +218,60 @@ class WorkbenchV2CreationTests(unittest.TestCase):
         self.assertIsNone(empty_card['latest_version_id'])
         self.assertEqual(empty_card['image_count'], 0)
         self.assertEqual(empty_card['model_count'], 0)
+
+
+class WorkbenchV2DirectionActivationTests(unittest.TestCase):
+    def setUp(self):
+        self.store = MemoryStore()
+        self.project_id = 'prj_suzhou_incense'
+        self.workspace = self.store.workspaces[self.project_id]
+        self.first = self.workspace['directions'][0]['id']
+        self.second = self.store.create_direction(self.project_id, {'name': '框景'})['id']
+        self.patcher = patch('app.main.store', self.store)
+        self.patcher.start()
+        self.addCleanup(self.patcher.stop)
+        self.client = TestClient(app)
+
+    def test_activation_atomically_syncs_both_fields_and_updates_timestamps(self):
+        with patch('app.store.now_iso', return_value='2026-11-01T00:00:00+00:00'):
+            activated = self.store.activate_direction(self.project_id, self.first)
+        self.assertIs(activated, self.workspace)
+        self.assertEqual(activated['active_direction_id'], self.first)
+        self.assertEqual(activated['project']['active_direction_id'], self.first)
+        self.assertEqual(activated['project']['updated_at'], '2026-11-01T00:00:00+00:00')
+        self.assertEqual(activated['directions'][0]['updated_at'], activated['project']['updated_at'])
+
+    def test_invalid_project_unknown_or_foreign_direction_never_mutates(self):
+        foreign = self.store.workspaces['prj_kunqu_lamp']['directions'][0]['id']
+        for project_id, direction_id in [('missing', self.first), (self.project_id, 'missing'), (self.project_id, foreign)]:
+            with self.subTest(project=project_id, direction=direction_id):
+                before = deepcopy(self.store.workspaces)
+                with self.assertRaises(KeyError):
+                    self.store.activate_direction(project_id, direction_id)
+                self.assertEqual(self.store.workspaces, before)
+                response = self.client.patch(f'/api/workbench/projects/{project_id}/directions/{direction_id}/activate')
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(self.store.workspaces, before)
+
+    def test_public_activation_drives_subsequent_image_job_direction(self):
+        response = self.client.patch(f'/api/workbench/projects/{self.project_id}/directions/{self.first}/activate')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['active_direction_id'], self.first)
+        self.assertEqual(response.json()['project']['active_direction_id'], self.first)
+        with patch('app.main.run_workbench_image_job'):
+            job = self.client.post(f'/api/workbench/projects/{self.project_id}/image-jobs', json={})
+        self.assertEqual(job.status_code, 202)
+        self.assertEqual(job.json()['direction_id'], self.first)
+
+    def test_activation_does_not_bypass_generation_gates(self):
+        fresh = self.store.create_project({'name': '无简报'})
+        direction = self.store.create_direction(fresh['project']['id'], {'name': '第一方向'})
+        project_id = fresh['project']['id']
+        response = self.client.patch(f"/api/workbench/projects/{project_id}/directions/{direction['id']}/activate")
+        self.assertEqual(response.status_code, 200)
+        generated = self.client.post(f'/api/workbench/projects/{project_id}/image-jobs', json={})
+        self.assertEqual(generated.status_code, 409)
+        self.assertEqual(fresh['jobs'], [])
 
 
 if __name__ == '__main__':

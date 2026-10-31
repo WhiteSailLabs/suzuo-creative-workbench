@@ -184,6 +184,16 @@ async def create_workbench_direction(project_id: str, payload: DirectionCreate):
         raise HTTPException(422, str(exc)) from exc
 
 
+@app.patch("/api/workbench/projects/{project_id}/directions/{direction_id}/activate",
+           response_model=WorkspaceOut)
+async def activate_workbench_direction(project_id: str, direction_id: str):
+    require_project(project_id)
+    try:
+        return store.activate_direction(project_id, direction_id)
+    except KeyError as exc:
+        raise HTTPException(404, "方向不存在或不属于当前项目") from exc
+
+
 @app.get("/api/workbench/projects/{project_id}/assets", response_model=list[AssetRecord])
 async def list_workbench_assets(project_id: str, type: Optional[str] = None,
                                 status: Optional[str] = None, direction_id: Optional[str] = None,

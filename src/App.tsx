@@ -11,7 +11,7 @@ import { DirectionSwitcher } from './components/DirectionSwitcher'
 import { TaskCenter, isRunning } from './components/TaskCenter'
 import { StageRail } from './components/StageRail'
 import { useSpeechInput } from './hooks/useSpeechInput'
-import { DEFAULT_PROJECT_ID, createImageJob, createRodinJob, listProjects, createTurn, getJob, getProposal, getWorkspace, retryJob, selectCandidate } from './lib/api'
+import { DEFAULT_PROJECT_ID, activateDirection, createImageJob, createRodinJob, listProjects, createTurn, getJob, getProposal, getWorkspace, retryJob, selectCandidate } from './lib/api'
 import type { AppView, ChangePatch, ProjectSummary, ConversationDisplayTurn, GenerationJob, Proposal, Workspace, WorkbenchUiState } from './types/workbench'
 
 const terminalStatuses = new Set(['completed', 'failed', 'stale'])
@@ -31,6 +31,8 @@ function App() {
   const [localTurns, setLocalTurns] = useState<ConversationDisplayTurn[]>([])
   const [directionId, setDirectionId] = useState<string | null>(null)
   const activeDirectionId = useRef<string | null>(null)
+  const [activatingDirection, setActivatingDirection] = useState(false)
+  const directionActivationPending = useRef(false)
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
@@ -65,10 +67,37 @@ function App() {
     if (id !== projectId) {
       projectContext.current += 1
       activeProjectId.current = id
-      setWorkspace(null); activeDirectionId.current = null; setDirectionId(null); setSelectedVersionId(null); setLocalTurns([]); setProposal(null)
+      setWorkspace(null); directionActivationPending.current = false; setActivatingDirection(false); activeDirectionId.current = null; setDirectionId(null); setSelectedVersionId(null); setLocalTurns([]); setProposal(null)
       setPendingGeneration(null); setGenerationNotice(''); setDraft({ text: '', revision: Date.now() }); submittingJobs.current.clear(); setStatus('ready'); setOffline(false); speech.reset(); setProjectId(id)
     }
     setView('workbench')
+  }
+
+  async function switchDirection(id: string) {
+    if (directionActivationPending.current) return
+    directionActivationPending.current = true
+    setActivatingDirection(true)
+    activeDirectionId.current = id
+    setDirectionId(id); setSelectedVersionId(null)
+    setPendingGeneration(null); setGenerationNotice('')
+    try {
+      const loaded = await activateDirection(projectId, id)
+      if (activeProjectId.current !== projectId || projectContext.current !== contextVersion) return
+      if (loaded.active_direction_id !== id || loaded.project.active_direction_id !== id) {
+        throw new Error('服务器尚未确认当前方向，请重新切换')
+      }
+      setWorkspace(loaded)
+      void refreshProjects()
+    } catch (error) {
+      if (activeProjectId.current === projectId && projectContext.current === contextVersion) {
+        setGenerationNotice(error instanceof Error ? error.message : '切换方向失败，请重试')
+      }
+    } finally {
+      if (activeProjectId.current === projectId && projectContext.current === contextVersion) {
+        directionActivationPending.current = false
+        setActivatingDirection(false)
+      }
+    }
   }
 
   const turns = useMemo<ConversationDisplayTurn[]>(() => {
@@ -105,6 +134,7 @@ function App() {
   }
 
   function canGenerate(kind: GenerationJob['kind']) {
+    if (directionActivationPending.current) { setGenerationNotice('正在切换方向，请稍候再生成'); return false }
     if (submittingJobs.current.has(kind) || workspace?.jobs.some(job => job.kind === kind && isRunning(job))) {
       setGenerationNotice('当前项目已有同类生成任务正在进行'); return false
     }
@@ -203,9 +233,9 @@ function App() {
     {offline && <div className="offline-banner" role="alert"><div><strong>暂时无法连接本地服务</strong><span>检查 FastAPI 是否在 8000 端口运行。你仍可查看页面，连接恢复后继续。</span></div><button onClick={() => void load()}><RefreshCw size={15} />重新连接</button></div>}
     {view === 'projects' ? <>{projectsError && <div className="offline-banner" role="alert">项目列表加载失败<button onClick={() => void refreshProjects()}>重新加载项目</button></div>}<ProjectDashboard projects={projects} onOpenProject={openProject} /></> : view === 'workbench' && workspace ? <main className="workbench-layout" style={{ gridTemplateColumns: `${leftCollapsed ? '44px' : 'minmax(260px,340px)'} minmax(420px,1fr) ${rightCollapsed ? '44px' : 'minmax(250px,310px)'}` }}>
       <StageRail current={workspace?.project.stage ?? 'capturing'} />
-      <div style={{ gridColumn: 1, gridRow: 2, minHeight: 0, display: 'flex', flexDirection: 'column' }}><button aria-expanded={!leftCollapsed} onClick={() => setLeftCollapsed(!leftCollapsed)}>{leftCollapsed ? '展开对话' : '收起对话'}</button><div hidden={leftCollapsed} style={{ minHeight: 0, flex: 1 }}><ConversationPanel turns={turns} speechSupported={speech.supported} speechState={speech.state} speechTranscript={speech.transcript} busy={status === 'interpreting'} onStartSpeech={speech.start} onStopSpeech={speech.stop} draft={draft} pendingGeneration={pendingGeneration?.patch} generationNotice={generationNotice} generationBlocked={workspace.jobs.some(job => job.kind === 'image' && isRunning(job)) ? '当前项目已有同类生成任务正在进行' : workspace.directions?.length && directionId !== (workspace.active_direction_id ?? workspace.project.active_direction_id) ? '当前方向仅供查看；请切回活动方向后生成' : undefined} onCancelGeneration={() => { if (pendingGeneration) setDraft({ text: pendingGeneration.text, revision: Date.now() }); setPendingGeneration(null) }} onConfirmGeneration={() => { if (!pendingGeneration || !canGenerate('image')) return; const pending = pendingGeneration; setPendingGeneration(null); void runImageGeneration(pending.sourceTurnId, pending.baseVersionId, pending.patch) }} onSubmit={submitTurn} /></div></div>
-      <DesignCanvas culture={workspace.culture} proposals={workspace.proposals} versions={visibleVersions} jobs={workspace?.jobs ?? []} selectedVersionId={displayedVersionId} candidateVersionId={workspace?.project.candidate_version_id ?? null} onSelectVersion={setSelectedVersionId} onLockCandidate={lockCandidate} onGenerate3d={(id) => void runRodinGeneration(id)} onRetryJob={(id) => void retryGeneration(id)} />
-      <aside style={{ gridColumn: 3, gridRow: 2, minHeight: 0, overflowY: 'auto' }}><button aria-expanded={!rightCollapsed} onClick={() => setRightCollapsed(!rightCollapsed)}>{rightCollapsed ? '展开设计状态' : '收起设计状态'}</button><TaskCenter jobs={workspace.jobs} onRetry={id => void retryGeneration(id)} /><div hidden={rightCollapsed}><DirectionSwitcher directions={workspace.directions ?? []} selectedId={directionId} onSelect={id => { activeDirectionId.current = id; setDirectionId(id); setSelectedVersionId(null); setPendingGeneration(null); setGenerationNotice('') }} /><DesignTruthPanel brief={latestBrief} culture={workspace?.culture ?? []} /></div></aside>
+      <div style={{ gridColumn: 1, gridRow: 2, minHeight: 0, display: 'flex', flexDirection: 'column' }}><button aria-expanded={!leftCollapsed} onClick={() => setLeftCollapsed(!leftCollapsed)}>{leftCollapsed ? '展开对话' : '收起对话'}</button><div hidden={leftCollapsed} style={{ minHeight: 0, flex: 1 }}><ConversationPanel turns={turns} speechSupported={speech.supported} speechState={speech.state} speechTranscript={speech.transcript} busy={status === 'interpreting'} onStartSpeech={speech.start} onStopSpeech={speech.stop} draft={draft} pendingGeneration={pendingGeneration?.patch} generationNotice={generationNotice} generationBlocked={activatingDirection ? '正在切换方向，请稍候再生成' : workspace.jobs.some(job => job.kind === 'image' && isRunning(job)) ? '当前项目已有同类生成任务正在进行' : workspace.directions?.length && directionId !== (workspace.active_direction_id ?? workspace.project.active_direction_id) ? '当前方向仅供查看；请切回活动方向后生成' : undefined} onCancelGeneration={() => { if (pendingGeneration) setDraft({ text: pendingGeneration.text, revision: Date.now() }); setPendingGeneration(null) }} onConfirmGeneration={() => { if (!pendingGeneration || !canGenerate('image')) return; const pending = pendingGeneration; setPendingGeneration(null); void runImageGeneration(pending.sourceTurnId, pending.baseVersionId, pending.patch) }} onSubmit={submitTurn} /></div></div>
+      <DesignCanvas assets={workspace.assets} direction={workspace.directions?.find(direction => direction.id === directionId)} culture={workspace.culture} proposals={workspace.proposals} versions={visibleVersions} jobs={workspace?.jobs ?? []} selectedVersionId={displayedVersionId} candidateVersionId={workspace?.project.candidate_version_id ?? null} onSelectVersion={setSelectedVersionId} onLockCandidate={lockCandidate} onGenerate3d={(id) => void runRodinGeneration(id)} onRetryJob={(id) => void retryGeneration(id)} />
+      <aside style={{ gridColumn: 3, gridRow: 2, minHeight: 0, overflowY: 'auto' }}><button aria-expanded={!rightCollapsed} onClick={() => setRightCollapsed(!rightCollapsed)}>{rightCollapsed ? '展开设计状态' : '收起设计状态'}</button><TaskCenter jobs={workspace.jobs} onRetry={id => void retryGeneration(id)} /><div hidden={rightCollapsed}><DirectionSwitcher directions={workspace.directions ?? []} selectedId={directionId} busy={activatingDirection} onSelect={id => void switchDirection(id)} /><DesignTruthPanel brief={latestBrief} culture={workspace?.culture ?? []} /></div></aside>
     </main> : <main className="app-page"><section className="page-placeholder panel-card"><h1>{view === 'workbench' ? '工作台' : placeholderTitles[view]}</h1><p>{view === 'workbench' ? offline ? '当前项目暂时无法加载，请重新连接。' : '正在加载当前项目…' : '此页面将在后续步骤开放。可返回工作台继续设计。'}</p>{view !== 'workbench' && <button onClick={() => setView('workbench')}>返回工作台</button>}</section></main>}
     {proposal && <ProposalView proposal={proposal} onClose={() => setProposal(null)} />}
   </AppShell>

@@ -20,7 +20,7 @@ async function open() {
 
 describe('workbench directions and tasks', () => {
   it('switches direction without showing versions from another direction', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => response(url.endsWith('/projects') ? [{ ...workspace.project, latest_version_id: 'A1', image_count: 2, model_count: 0, pending_count: 0 }] : workspace)))
+    generationServer()
     await open()
     await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
     expect(screen.getByAltText('B1 二维概念图')).toBeInTheDocument()
@@ -48,10 +48,11 @@ describe('workbench directions and tasks', () => {
 const patch = { changes: { shape: '简化镂空' }, preserve: ['丝绸质感'], constraints: ['稳定底座'] }
 function generationServer() {
   let current = structuredClone(workspace)
-  const calls: Array<{ url: string; body: Record<string, unknown> }> = []
+  const calls: Array<{ url: string; body: Record<string, unknown>; method: string }> = []
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     const body = init?.body ? JSON.parse(String(init.body)) : {}
-    calls.push({ url, body })
+    calls.push({ url, body, method: init?.method ?? 'GET' })
+    if (url.endsWith('/activate')) { const id = url.includes('/directions/b/') ? 'b' : 'a'; current.active_direction_id = id; current.project.active_direction_id = id; return response(structuredClone(current)) }
     if (url.endsWith('/projects')) return response([{ ...current.project, latest_version_id: 'A1', image_count: 2, model_count: 0, pending_count: 0 }])
     if (url.endsWith('/turns')) {
       const turn = { id: `turn${current.turns.length}`, text: body.text, intent: 'GENERATE' as const, restatement: '简化镂空并保留丝绸', change_patch: patch, brief_revision: 1, interpreter_mode: 'fallback' as const, created_at: '' }
@@ -104,17 +105,38 @@ it('requires changes/preserve/constraints confirmation and binds every mutation 
   expect(calls.find(c => c.url.endsWith('/retry'))?.body).toEqual({})
 })
 
-it('allows an explicit confirmation phrase while blocking generation in a nonactive direction', async () => {
+it('PATCHes the current project direction before allowing generation in the activated direction', async () => {
   const { calls } = generationServer()
   await open()
   await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
-  await send('确认修改并生成新版')
-  await screen.findByText('当前方向仅供查看；请切回活动方向后生成')
-  expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'a')
+  await screen.findByAltText('B1 二维概念图')
+  await waitFor(() => expect(calls.some(c => c.url.endsWith('/projects/second/directions/b/activate') && c.method === 'PATCH')).toBe(true))
   await send('确认修改并生成新版')
   await waitFor(() => expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(1))
+  expect(calls.find(c => c.url.endsWith('/image-jobs'))?.body.base_version_id).toBe('B1')
   expect(screen.queryByRole('region', { name: '生成确认卡' })).not.toBeInTheDocument()
+})
+
+it('blocks generation while activation is pending and retains the original active direction on failure', async () => {
+  const { calls } = generationServer()
+  const originalFetch = globalThis.fetch
+  let rejectActivation!: (value: unknown) => void
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => url.endsWith('/directions/b/activate') ? new Promise(resolve => { rejectActivation = resolve }) : originalFetch(url, init)))
+  await open()
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'b')
+  expect(screen.getByRole('combobox', { name: '当前方向' })).toBeDisabled()
+  expect(await screen.findByText('正在切换方向，请稍候再生成')).toBeInTheDocument()
+  await send('确认修改并生成新版')
+  expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
+  rejectActivation({ ok: false, status: 404, json: async () => ({ detail: '方向不存在或不属于当前项目' }) })
+  expect(await screen.findByText('方向不存在或不属于当前项目')).toBeInTheDocument()
+  await send('确认修改并生成新版')
+  expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(0)
+  await screen.findByText('当前方向仅供查看；请切回活动方向后生成')
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: '当前方向' }), 'a')
+  await waitFor(() => expect(screen.getByRole('combobox', { name: '当前方向' })).toBeEnabled())
+  await send('确认修改并生成新版')
+  await waitFor(() => expect(calls.filter(c => c.url.endsWith('/image-jobs'))).toHaveLength(1))
 })
 
 it('labels the five cultural evidence types independently', async () => {

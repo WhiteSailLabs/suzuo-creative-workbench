@@ -28,6 +28,7 @@ export function listProjects() { return request<ProjectSummary[]>('/api/workbenc
 export function createProject(payload: ProjectCreate) { return request<Workspace>('/api/workbench/projects', post(payload)) }
 export function getWorkspace(projectId: string) { return request<Workspace>(projectPath(projectId)) }
 export function createDirection(projectId: string, payload: DirectionCreate) { return request<DesignDirection>(`${projectPath(projectId)}/directions`, post(payload)) }
+export function activateDirection(projectId: string, directionId: string) { return request<Workspace>(`${projectPath(projectId)}/directions/${encodeURIComponent(directionId)}/activate`, { method: 'PATCH' }) }
 export function createTurn(text: string, projectId: string, correctedTurnId?: string) { return request<ConversationTurn>(`${projectPath(projectId)}/turns`, post({ text, corrected_turn_id: correctedTurnId })) }
 export function assetUrl(artifactId: string) { return `${API_BASE_URL}/api/workbench/assets/${encodeURIComponent(artifactId)}` }
 export function createImageJob(sourceTurnId: string | undefined, baseVersionId: string | undefined, projectId: string, context?: Pick<StageGateContext, 'changes' | 'preserve'>) { return request<GenerationJob>(`${projectPath(projectId)}/image-jobs`, post({ source_turn_id: sourceTurnId, base_version_id: baseVersionId, ...context })) }

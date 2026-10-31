@@ -135,6 +135,19 @@ class MemoryStore:
         workspace["project"].update(active_direction_id=direction["id"], updated_at=now)
         return direction
 
+    def activate_direction(self, project_id: str, direction_id: str) -> dict[str, Any]:
+        """Validate ownership before synchronously changing either active field."""
+        workspace = self.workspaces[project_id]
+        direction = next((item for item in workspace["directions"]
+                          if item["id"] == direction_id), None)
+        if direction is None:
+            raise KeyError("方向不存在或不属于当前项目")
+        now = now_iso()
+        workspace["active_direction_id"] = direction_id
+        workspace["project"].update(active_direction_id=direction_id, updated_at=now)
+        direction["updated_at"] = now
+        return workspace
+
     def workspace_for_project(self, project_id: str) -> dict[str, Any] | None:
         return self.workspaces.get(project_id)
 
