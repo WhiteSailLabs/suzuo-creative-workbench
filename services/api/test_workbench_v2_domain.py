@@ -1,7 +1,11 @@
 import unittest
 
 from app import cultural_workbench
-from app.schemas import WorkspaceOut
+from pydantic import ValidationError
+
+from app.schemas import (
+    CulturalReference, CulturalReferenceCreate, CulturalReferencePatch, WorkspaceOut,
+)
 from app.store import MemoryStore
 
 
@@ -50,6 +54,50 @@ class WorkbenchV2SeedTests(unittest.TestCase):
         self.assertEqual(len(store.workspaces), 3)
         store.workspaces = {'prj_suzhou_incense': cultural_workbench.create_seed_workspace()}
         self.assertIsNone(store.workspace_for_project('prj_kunqu_lamp'))
+
+
+class WorkbenchV2CultureKindTests(unittest.TestCase):
+    def test_domain_exposes_five_distinct_cultural_kinds(self):
+        self.assertEqual(set(cultural_workbench.CULTURE_KINDS), {
+            'fact', 'translation', 'designer_judgment', 'generated', 'to_verify',
+        })
+
+    def test_five_kinds_validate_and_serialize_with_distinct_visible_labels(self):
+        expected = {
+            'fact': '文化事实', 'translation': '设计转译',
+            'designer_judgment': '设计师判断', 'generated': 'AI 推断',
+            'to_verify': '待核验',
+        }
+        for kind, label in expected.items():
+            with self.subTest(kind=kind):
+                payload = {'kind': kind, 'title': '设计依据', 'statement': '演示说明', 'source_title': '项目资料'}
+                created = CulturalReferenceCreate.model_validate(payload)
+                patched = CulturalReferencePatch.model_validate({'kind': kind})
+                self.assertEqual(patched.kind, kind)
+                item = CulturalReference(id='culture_example', **created.model_dump())
+                serialized = item.model_dump(mode='json')
+                self.assertEqual(serialized['kind'], kind)
+                self.assertEqual(serialized['kind_label'], label)
+                self.assertEqual(CulturalReference.model_validate_json(item.model_dump_json()).kind, kind)
+        with self.assertRaises(ValidationError):
+            CulturalReferenceCreate(kind='unknown', title='未知', statement='内容')
+
+    def test_store_rejects_unknown_kind_without_mutating_existing_references(self):
+        store = MemoryStore()
+        project_id = 'prj_suzhou_incense'
+        before_count = len(store.workspaces[project_id]['culture'])
+        with self.assertRaises(ValueError):
+            store.create_cultural_reference(project_id, {'kind': 'unknown', 'title': '未知', 'statement': '内容'})
+        self.assertEqual(len(store.workspaces[project_id]['culture']), before_count)
+        item = store.create_cultural_reference(project_id, {
+            'kind': 'designer_judgment', 'title': '设计判断', 'statement': '底座比例合适',
+        })
+        for kind in ('fact', 'translation', 'designer_judgment', 'generated', 'to_verify'):
+            patched = store.patch_cultural_reference(project_id, item['id'], {'kind': kind, 'source_title': '资料'})
+            self.assertEqual(patched['kind'], kind)
+        with self.assertRaises(ValueError):
+            store.patch_cultural_reference(project_id, item['id'], {'kind': 'unknown'})
+        self.assertEqual(item['kind'], 'to_verify')
 
 
 class WorkbenchV2CreationTests(unittest.TestCase):
@@ -132,7 +180,7 @@ class WorkbenchV2CreationTests(unittest.TestCase):
         })
         self.assertEqual(self.store.workspaces['prj_suzhou_incense']['project']['brief_revision'], 1)
 
-    def test_retried_image_and_rodin_job_retain_original_direction(self):
+    def test_image_retry_keeps_direction_and_initial_rodin_inherits_source_direction(self):
         workspace = self.store.workspaces['prj_suzhou_incense']
         initial = workspace['active_direction_id']
         job = self.store.create_image_job('prj_suzhou_incense', {})

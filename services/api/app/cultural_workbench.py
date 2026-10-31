@@ -16,7 +16,15 @@ STAGES = (
 )
 
 STAGE_STATUSES = ("active", "awaiting_confirmation", "blocked", "done")
-CULTURE_KINDS = ("fact", "translation", "generated", "to_verify")
+# Keep `generated` as the compatible wire value for AI inference.
+CULTURE_KIND_LABELS = {
+    "fact": "文化事实",
+    "translation": "设计转译",
+    "designer_judgment": "设计师判断",
+    "generated": "AI 推断",
+    "to_verify": "待核验",
+}
+CULTURE_KINDS = tuple(CULTURE_KIND_LABELS)
 
 
 def _now_iso() -> str:

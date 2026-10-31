@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
+
+from .cultural_workbench import CULTURE_KIND_LABELS
 
 
 WorkbenchStage = Literal[
@@ -10,7 +12,7 @@ WorkbenchStage = Literal[
     "reviewing", "presenting", "archived",
 ]
 StageStatus = Literal["active", "awaiting_confirmation", "blocked", "done"]
-CultureKind = Literal["fact", "translation", "generated", "to_verify"]
+CultureKind = Literal["fact", "translation", "designer_judgment", "generated", "to_verify"]
 JobStatus = Literal["submitted", "processing", "completed", "failed", "stale"]
 
 
@@ -61,6 +63,11 @@ class CulturalReference(BaseModel):
     source_url: str = ""
     note: str = ""
     verified: bool = False
+
+    @computed_field
+    @property
+    def kind_label(self) -> str:
+        return CULTURE_KIND_LABELS[self.kind]
 
 
 class CulturalReferenceCreate(BaseModel):

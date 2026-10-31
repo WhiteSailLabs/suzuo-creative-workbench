@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .cultural_workbench import (
+    CULTURE_KINDS,
     append_brief_revision,
     create_seed_workspaces,
     transition_stage,
@@ -141,6 +142,8 @@ class MemoryStore:
     def create_cultural_reference(
         self, project_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
+        if payload.get("kind") not in CULTURE_KINDS:
+            raise ValueError("未知文化资料类型")
         item = {"id": new_id("culture"), **deepcopy(payload)}
         self.workspaces[project_id]["culture"].append(item)
         return item
@@ -159,6 +162,8 @@ class MemoryStore:
             **item,
             **{key: value for key, value in payload.items() if value is not None},
         }
+        if candidate["kind"] not in CULTURE_KINDS:
+            raise ValueError("未知文化资料类型")
         if candidate["kind"] == "fact" and not candidate.get("source_title", "").strip():
             raise ValueError("文化事实必须提供来源标题")
         item.update(candidate)
