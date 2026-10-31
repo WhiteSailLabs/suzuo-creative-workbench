@@ -67,11 +67,14 @@ describe('App', () => {
     await userEvent.type(screen.getByLabelText('描述或修改设计'), '生成一版更轻的方案')
     await userEvent.click(screen.getByRole('button', { name: '发送设计想法' }))
 
+    await userEvent.click(await screen.findByRole('button', { name: '确认并生成' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5))
     const imageRequest = fetchMock.mock.calls[3][1] as RequestInit
     expect(JSON.parse(String(imageRequest.body))).toEqual({
       source_turn_id: 'turn_generate',
       base_version_id: 'version_v1',
+      changes: { visual_weight: 'lighter' },
+      preserve: [],
     })
   })
 
