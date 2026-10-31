@@ -80,9 +80,12 @@ class MemoryStore:
                 **deepcopy(workspace["project"]),
                 "latest_version_id": latest["id"] if latest else None,
                 "latest_version_label": latest["label"] if latest else None,
+                "current_direction_name": next((direction["name"] for direction in workspace["directions"] if direction["id"] == workspace["project"].get("active_direction_id")), None),
+                "culture_count": len(workspace["culture"]),
                 "image_count": sum(item.get("kind") == "image" for item in artifacts),
                 "model_count": sum(item.get("kind") == "model_glb" for item in artifacts),
                 "pending_count": pending,
+                "latest_action": (workspace["turns"][-1].get("text") if workspace["turns"] else ("文化资料待核验" if any(entry["kind"] == "to_verify" or (entry["kind"] == "fact" and not entry.get("verified")) for entry in workspace["culture"]) else None)),
             })
         return cards
 
@@ -377,6 +380,7 @@ class MemoryStore:
     ) -> dict[str, Any]:
         if payload.get("kind") not in CULTURE_KINDS:
             raise ValueError("未知文化资料类型")
+        self._validate_cultural_evidence(payload)
         item = {"id": new_id("culture"), **deepcopy(payload)}
         self.workspaces[project_id]["culture"].append(item)
         return item
@@ -397,10 +401,27 @@ class MemoryStore:
         }
         if candidate["kind"] not in CULTURE_KINDS:
             raise ValueError("未知文化资料类型")
-        if candidate["kind"] == "fact" and not candidate.get("source_title", "").strip():
-            raise ValueError("文化事实必须提供来源标题")
+        self._validate_cultural_evidence(candidate)
         item.update(candidate)
         return item
+
+    @staticmethod
+    def _validate_cultural_evidence(reference: dict[str, Any]) -> None:
+        if reference.get("kind") != "fact":
+            return
+        if not reference.get("source_title", "").strip():
+            raise ValueError("文化事实必须提供来源标题")
+        if not reference.get("verified"):
+            return
+        missing = []
+        if not reference.get("source_url", "").strip():
+            missing.append("来源 URL 或文件标识")
+        if not reference.get("statement", "").strip():
+            missing.append("摘要/说明")
+        if "核验时间：" not in reference.get("note", ""):
+            missing.append("核验时间")
+        if missing:
+            raise ValueError("文化事实核验资料不完整：" + "、".join(missing))
 
     def customer_safe_culture(self, project_id: str) -> list[dict[str, Any]]:
         return [
@@ -411,6 +432,9 @@ class MemoryStore:
                 item["kind"] == "fact"
                 and item.get("verified") is True
                 and bool(item.get("source_title", "").strip())
+                and bool(item.get("source_url", "").strip())
+                and bool(item.get("statement", "").strip())
+                and "核验时间：" in item.get("note", "")
             )
         ]
 

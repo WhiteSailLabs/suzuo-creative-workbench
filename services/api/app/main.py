@@ -291,7 +291,10 @@ async def create_workbench_culture(
 ) -> dict[str, Any]:
     if store.workspace_for_project(project_id) is None:
         raise HTTPException(404, "文创项目不存在")
-    return store.create_cultural_reference(project_id, payload.model_dump())
+    try:
+        return store.create_cultural_reference(project_id, payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.patch(

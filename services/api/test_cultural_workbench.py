@@ -314,6 +314,8 @@ class CulturalWorkbenchApiTests(unittest.TestCase):
                 "title": "待复核园林说法",
                 "statement": "先按文化事实录入。",
                 "source_title": "内部资料卡",
+                "source_url": "file://内部资料卡.pdf",
+                "note": "核验时间：2026-10-31",
                 "verified": True,
             },
         )
@@ -337,6 +339,8 @@ class CulturalWorkbenchApiTests(unittest.TestCase):
                 "title": "已核验资料",
                 "statement": "可进入客户提案的文化事实。",
                 "source_title": "权威资料",
+                "source_url": "https://example.com/source",
+                "note": "核验时间：2026-10-31",
                 "verified": True,
             },
         )
@@ -356,6 +360,47 @@ class CulturalWorkbenchApiTests(unittest.TestCase):
         self.assertIn("漏景的产品转译", titles)
         self.assertNotIn("AI 想象", titles)
         self.assertNotIn("漏景", titles)
+
+    def test_verified_cultural_fact_requires_complete_evidence(self):
+        response = self.client.post(
+            "/api/workbench/projects/prj_suzhou_incense/culture",
+            json={
+                "kind": "fact",
+                "title": "缺少证据的事实",
+                "statement": "不能只靠来源标题核验。",
+                "source_title": "资料卡",
+                "verified": True,
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("来源 URL 或文件标识", response.json()["detail"])
+
+    def test_patch_verification_requires_evidence_and_accepts_complete_record(self):
+        created = self.client.post(
+            "/api/workbench/projects/prj_suzhou_incense/culture",
+            json={
+                "kind": "fact",
+                "title": "待核验事实",
+                "statement": "待补齐证据。",
+                "source_title": "资料卡",
+                "verified": False,
+            },
+        ).json()
+        incomplete = self.client.patch(
+            "/api/workbench/projects/prj_suzhou_incense/culture/" + created["id"],
+            json={"verified": True},
+        )
+        self.assertEqual(incomplete.status_code, 422)
+        complete = self.client.patch(
+            "/api/workbench/projects/prj_suzhou_incense/culture/" + created["id"],
+            json={
+                "source_url": "file://资料卡.pdf",
+                "note": "核验时间：2026-10-31",
+                "verified": True,
+            },
+        )
+        self.assertEqual(complete.status_code, 200)
+        self.assertTrue(complete.json()["verified"])
 
     def test_image_job_api_creates_version_and_serves_asset(self):
         turn = self.client.post(
