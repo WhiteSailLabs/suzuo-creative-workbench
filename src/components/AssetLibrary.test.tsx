@@ -178,6 +178,22 @@ describe('asset relations and safe operations', () => {
     expect(within(card).getByRole('link', { name: '下载' })).toHaveAttribute('href', 'http://127.0.0.1:8000/api/workbench/assets/image1')
   })
 
+  it('supports selecting multiple assets and applying a project-scoped batch proposal action', async () => {
+    const second = asset({ asset_id: 'image2', title: '框景香插' })
+    const fetcher = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => init?.method === 'POST' ? response({ proposal_asset_ids: ['image1', 'image2'] }) : response([asset(), second]))
+    vi.stubGlobal('fetch', fetcher)
+    render(<AssetLibrary {...props} />)
+    const firstCard = await screen.findByRole('article', { name: '漏景香插' })
+    const secondCard = await screen.findByRole('article', { name: '框景香插' })
+    await userEvent.click(within(firstCard).getByRole('checkbox', { name: '选择漏景香插' }))
+    await userEvent.click(within(secondCard).getByRole('checkbox', { name: '选择框景香插' }))
+    const toolbar = screen.getByRole('toolbar', { name: '批量资产操作' })
+    expect(toolbar).toHaveTextContent('已选择 2 项')
+    await userEvent.click(within(toolbar).getByRole('button', { name: '批量加入提案' }))
+    expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(2)
+    expect(await screen.findByRole('status')).toHaveTextContent('已将 2 项加入提案')
+  })
+
   it('does not show proposal success when the server rejects selection', async () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => init?.method === 'POST' ? { ok: false, status: 422, json: async () => ({ detail: '资产不符合提案选材条件' }) } : response([asset()])))
     render(<AssetLibrary {...props} />)
