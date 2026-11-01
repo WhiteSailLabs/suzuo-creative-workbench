@@ -19,6 +19,8 @@
 
 ## 本地启动
 
+完整的中文启动、离线演示和故障排查步骤见 [项目启动文档](STARTUP.md)。
+
 需要 Node.js、Python 3.9+，以及已完成 OAuth 的 Hyper3D CLI。
 
 ```bash
