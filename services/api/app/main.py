@@ -625,6 +625,7 @@ async def get_workbench_asset(artifact_id: str) -> FileResponse:
     allowed_roots = (
         Path(settings.image_output_dir).resolve(),
         Path(settings.rodin_output_dir).resolve(),
+        Path(__file__).resolve().parents[3] / "mock-data",
     )
     if not any(target == root or root in target.parents for root in allowed_roots):
         raise HTTPException(403, "成果文件路径无效")

@@ -31,3 +31,9 @@ __pycache__/
 vendor/*.zip
 vendor/material-downloads/*.zip
 workflow-sources/comfyui-workflow-templates/
+
+.env
+.env.*
+!.env.example
+.learnings/
+.playwright-cli/

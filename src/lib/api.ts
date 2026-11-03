@@ -1,6 +1,6 @@
 import type { AssetFilters, AssetManifest, AssetPatch, AssetRecord, AssetRelations, ConversationTurn, CulturalReference, DesignDirection, DesignVersion, DirectionCreate, GenerationJob, ProjectCreate, ProjectSummary, Proposal, ProposalAudience, ReviewCreate, ReviewRecord, ReviewStatus, StageGateAction, StageGateContext, StageGateResult, Workspace } from '../types/workbench'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 // Used by App only to load the legacy project on first launch.
 export const DEFAULT_PROJECT_ID = 'prj_suzhou_incense'
 

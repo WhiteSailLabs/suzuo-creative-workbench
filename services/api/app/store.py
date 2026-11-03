@@ -61,6 +61,22 @@ class MemoryStore:
 
     def __init__(self) -> None:
         self.workspaces: dict[str, dict[str, Any]] = create_seed_workspaces()
+        # Restore the packaged local demo snapshots after a server restart.
+        demo_root = Path(__file__).resolve().parents[3] / "mock-data"
+        for snapshot in sorted(demo_root.glob("*/data/workspace.json")):
+            workspace = json.loads(snapshot.read_text(encoding="utf-8"))
+            manifest = json.loads(snapshot.with_name("artifacts.json").read_text(encoding="utf-8"))
+            for version in workspace.get("versions", []):
+                for artifact in version.get("artifacts", []):
+                    saved = manifest.get(artifact["id"])
+                    if saved:
+                        target = (snapshot.parent.parent / saved["file"]).resolve()
+                        if demo_root.resolve() in target.parents and target.is_file():
+                            artifact["path"] = str(target)
+            project_id = workspace["project"]["id"]
+            if project_id in self.workspaces:
+                self.workspaces[project_id] = workspace
+
 
     def list_projects(self) -> list[dict[str, Any]]:
         """Return project cards derived from each project's own workspace."""
