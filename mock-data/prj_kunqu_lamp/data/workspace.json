@@ -1,0 +1,908 @@
+{
+  "project": {
+    "id": "prj_kunqu_lamp",
+    "name": "昆曲水袖 · 水袖桌面灯",
+    "product_type": "桌面灯",
+    "stage": "reviewing",
+    "stage_status": "awaiting_confirmation",
+    "active_direction_id": "direction_prj_kunqu_lamp",
+    "owner": "",
+    "collaborators": [],
+    "target_user": "",
+    "use_scene": "",
+    "brief_revision": 4,
+    "candidate_version_id": "version_51cda33477",
+    "created_at": "2026-10-31T14:10:30+00:00",
+    "updated_at": "2026-10-31T16:03:56+00:00"
+  },
+  "active_direction_id": "direction_prj_kunqu_lamp",
+  "directions": [
+    {
+      "id": "direction_prj_kunqu_lamp",
+      "name": "水袖",
+      "concept": "将水袖的流动意象转译为柔和曲面与光影层次",
+      "status": "draft",
+      "culture_ids": [
+        "prj_kunqu_lamp_culture_reference",
+        "prj_kunqu_lamp_culture_translation"
+      ],
+      "material_ids": [],
+      "created_at": "2026-10-31T14:10:30+00:00",
+      "updated_at": "2026-10-31T14:10:30+00:00"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "artifact_image_a1ace64bb0",
+      "asset_type": "image",
+      "project_id": "prj_kunqu_lamp",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "version_id": "version_e01e396833",
+      "title": "V1 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_47bfe2b6da",
+      "source_culture_ids": [
+        "prj_kunqu_lamp_culture_reference"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:34:22+00:00",
+      "updated_at": "2026-10-31T15:41:39+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_a1ace64bb0",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_d43d2e403d",
+      "asset_type": "model_glb",
+      "project_id": "prj_kunqu_lamp",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "version_id": "version_e01e396833",
+      "title": "V1 model_glb",
+      "status": "stale",
+      "source_asset_ids": [
+        "artifact_image_a1ace64bb0"
+      ],
+      "source_turn_id": "turn_47bfe2b6da",
+      "source_culture_ids": [
+        "prj_kunqu_lamp_culture_reference",
+        "prj_kunqu_lamp_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:35:07+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_d43d2e403d",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "preview"
+    },
+    {
+      "asset_id": "artifact_image_978a8f4b97",
+      "asset_type": "image",
+      "project_id": "prj_kunqu_lamp",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "version_id": "version_16db7b2c42",
+      "title": "V2 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_528ae18f97",
+      "source_culture_ids": [
+        "prj_kunqu_lamp_culture_reference"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:41:38+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_978a8f4b97",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_12cf08b8c5",
+      "asset_type": "model_glb",
+      "project_id": "prj_kunqu_lamp",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "version_id": "version_16db7b2c42",
+      "title": "V2 model_glb",
+      "status": "stale",
+      "source_asset_ids": [
+        "artifact_image_978a8f4b97"
+      ],
+      "source_turn_id": "turn_528ae18f97",
+      "source_culture_ids": [
+        "prj_kunqu_lamp_culture_reference",
+        "prj_kunqu_lamp_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:42:21+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_12cf08b8c5",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "preview"
+    },
+    {
+      "asset_id": "artifact_image_b1354ce7e6",
+      "asset_type": "image",
+      "project_id": "prj_kunqu_lamp",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "version_id": "version_51cda33477",
+      "title": "V3 image",
+      "status": "selected",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_31302a65d4",
+      "source_culture_ids": [],
+      "tags": [],
+      "created_at": "2026-10-31T16:02:01+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_b1354ce7e6",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_45ad1f76f6",
+      "asset_type": "model_glb",
+      "project_id": "prj_kunqu_lamp",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "version_id": "version_51cda33477",
+      "title": "V3 model_glb",
+      "status": "completed",
+      "source_asset_ids": [
+        "artifact_image_d90b639829",
+        "artifact_image_7970bc9058",
+        "artifact_image_011f315050",
+        "artifact_image_b1354ce7e6",
+        "artifact_image_6da961a698"
+      ],
+      "source_turn_id": "turn_31302a65d4",
+      "source_culture_ids": [
+        "prj_kunqu_lamp_culture_reference",
+        "prj_kunqu_lamp_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T16:03:56+00:00",
+      "updated_at": "2026-10-31T16:03:56+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_45ad1f76f6",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "final"
+    }
+  ],
+  "reviews": [],
+  "proposals": [],
+  "proposal_asset_ids": [],
+  "proposal_selection_explicit": false,
+  "brief_revisions": [
+    {
+      "revision": 0,
+      "confirmed": {
+        "product_type": "桌面灯",
+        "culture_cues": "水袖",
+        "function": "桌面氛围照明"
+      },
+      "assumptions": {
+        "material": "半透明灯罩与稳定底座",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": null,
+      "created_at": "2026-10-31T14:10:30+00:00"
+    },
+    {
+      "revision": 1,
+      "confirmed": {
+        "product_type": "桌面灯",
+        "culture_cues": "水袖",
+        "function": "桌面氛围照明",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "半透明灯罩与稳定底座",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_47bfe2b6da",
+      "created_at": "2026-10-31T15:33:32+00:00"
+    },
+    {
+      "revision": 2,
+      "confirmed": {
+        "product_type": "桌面灯",
+        "culture_cues": "水袖",
+        "function": "桌面氛围照明",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "半透明灯罩与稳定底座",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_528ae18f97",
+      "created_at": "2026-10-31T15:40:56+00:00"
+    },
+    {
+      "revision": 3,
+      "confirmed": {
+        "product_type": "桌面灯",
+        "culture_cues": "水袖",
+        "function": "桌面氛围照明",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "半透明灯罩与稳定底座",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_7417dad830",
+      "created_at": "2026-10-31T15:59:47+00:00"
+    },
+    {
+      "revision": 4,
+      "confirmed": {
+        "product_type": "桌面灯",
+        "culture_cues": "水袖",
+        "function": "桌面氛围照明",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "半透明灯罩与稳定底座",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_31302a65d4",
+      "created_at": "2026-10-31T16:00:55+00:00"
+    }
+  ],
+  "culture": [
+    {
+      "id": "prj_kunqu_lamp_culture_reference",
+      "kind": "to_verify",
+      "title": "水袖",
+      "statement": "水袖文化线索，正式使用前需补充权威资料核验。",
+      "source_title": "Demo 待核验线索",
+      "source_url": "",
+      "note": "",
+      "verified": false,
+      "kind_label": "待核验"
+    },
+    {
+      "id": "prj_kunqu_lamp_culture_translation",
+      "kind": "translation",
+      "title": "水袖的产品转译",
+      "statement": "将水袖的流动意象转译为柔和曲面与光影层次",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "",
+      "verified": true,
+      "kind_label": "设计转译"
+    }
+  ],
+  "turns": [
+    {
+      "id": "turn_47bfe2b6da",
+      "text": "做一个昆曲水袖灵感的桌面灯，面向年轻用户，适合书桌与居家空间，轻盈流动，现代简洁，生成二维概念",
+      "intent": "GENERATE",
+      "restatement": "我已经记录本轮意图，并会沿用当前 Brief 和已确认约束继续推进。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "target_user": "年轻用户"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 1,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:33:32+00:00"
+    },
+    {
+      "id": "turn_528ae18f97",
+      "text": "设计一款适合三维生成的昆曲水袖灵感桌面灯。单一完整产品主体，稳定底座、清晰灯杆与柔和灯罩组成的可制造结构，灯罩像水袖一样形成流动但连续的曲面，暖白与朱红点缀，现代简洁，三分之四正面视角，居中完整展示，比例真实，轮廓清楚，纯浅灰背景，柔和产品摄影棚光线，无人物、无舞台、无布景、无文字、无包装，适合后续生成可旋转三维概念模型。",
+      "intent": "GENERATE",
+      "restatement": "我已经记录本轮意图，并会沿用当前 Brief 和已确认约束继续推进。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {}
+      },
+      "brief_revision": 2,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:40:56+00:00"
+    },
+    {
+      "id": "turn_7417dad830",
+      "text": "为昆曲水袖桌面灯制作三维建模参考图：单一主体、底座灯杆灯罩结构清晰、无人物无道具。",
+      "intent": "DISCUSS",
+      "restatement": "我会先把这轮内容作为讨论和设计假设记录，不启动生成任务。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {}
+      },
+      "brief_revision": 3,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:59:47+00:00"
+    },
+    {
+      "id": "turn_31302a65d4",
+      "text": "为昆曲水袖桌面灯制作三维建模参考图：单一主体、底座灯杆灯罩结构清晰、无人物无道具。",
+      "intent": "DISCUSS",
+      "restatement": "我会先把这轮内容作为讨论和设计假设记录，不启动生成任务。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {}
+      },
+      "brief_revision": 4,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T16:00:55+00:00"
+    }
+  ],
+  "versions": [
+    {
+      "id": "version_e01e396833",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "label": "V1",
+      "parent_version_id": null,
+      "brief_revision": 1,
+      "source_turn_id": "turn_47bfe2b6da",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_a1ace64bb0",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_a1ace64bb0",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_d43d2e403d",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_d43d2e403d",
+          "media_type": "model/gltf-binary",
+          "generation_id": "3d304f66-e0b4-44df-b754-f07198458f0c",
+          "role": "preview",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_a1ace64bb0"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:34:22+00:00"
+    },
+    {
+      "id": "version_16db7b2c42",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "label": "V2",
+      "parent_version_id": null,
+      "brief_revision": 2,
+      "source_turn_id": "turn_528ae18f97",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_978a8f4b97",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_978a8f4b97",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_12cf08b8c5",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_12cf08b8c5",
+          "media_type": "model/gltf-binary",
+          "generation_id": "cc208b57-9984-4523-b57d-585751dc9dba",
+          "role": "preview",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_978a8f4b97"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:41:38+00:00"
+    },
+    {
+      "id": "version_51cda33477",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "label": "V3",
+      "parent_version_id": null,
+      "brief_revision": 4,
+      "source_turn_id": "turn_31302a65d4",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_b1354ce7e6",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_b1354ce7e6",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_d90b639829",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_d90b639829",
+          "view_label": "front",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_6da961a698",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_6da961a698",
+          "view_label": "side",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_7970bc9058",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_7970bc9058",
+          "view_label": "back",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_011f315050",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_011f315050",
+          "view_label": "top",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_45ad1f76f6",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_45ad1f76f6",
+          "media_type": "model/gltf-binary",
+          "generation_id": "b31329c3-8292-4ba6-8c39-12d10dc621f6",
+          "role": "final",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_d90b639829",
+            "artifact_image_7970bc9058",
+            "artifact_image_011f315050",
+            "artifact_image_b1354ce7e6",
+            "artifact_image_6da961a698"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "selected",
+      "created_at": "2026-10-31T16:02:01+00:00"
+    }
+  ],
+  "jobs": [
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_kunqu_lamp_culture_reference",
+          "title": "水袖",
+          "description": "水袖文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_9fc82fb6a5",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_e01e396833",
+      "artifact_id": "artifact_image_a1ace64bb0",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面灯；用户本轮原始需求：做一个昆曲水袖灵感的桌面灯，面向年轻用户，适合书桌与居家空间，轻盈流动，现代简洁，生成二维概念；设计 Brief：{\"product_type\": \"桌面灯\", \"culture_cues\": \"水袖\", \"function\": \"桌面氛围照明\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。\n参考依据：水袖；设计参考：水袖文化线索，正式使用前需补充权威资料核验。；来源：",
+      "brief_revision": 1,
+      "source_turn_id": "turn_47bfe2b6da",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:33:33+00:00",
+      "updated_at": "2026-10-31T15:34:22+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_kunqu_lamp_culture_reference",
+          "title": "水袖",
+          "description": "水袖文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_8eb51130b0",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_e01e396833",
+      "artifact_id": "artifact_glb_d43d2e403d",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 1,
+      "source_turn_id": "turn_47bfe2b6da",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_a1ace64bb0"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_a1ace64bb0",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:34:23+00:00",
+      "updated_at": "2026-10-31T15:35:07+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_kunqu_lamp_culture_reference",
+          "title": "水袖",
+          "description": "水袖文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_c0ed19affb",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_16db7b2c42",
+      "artifact_id": "artifact_image_978a8f4b97",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面灯；用户本轮原始需求：设计一款适合三维生成的昆曲水袖灵感桌面灯。单一完整产品主体，稳定底座、清晰灯杆与柔和灯罩组成的可制造结构，灯罩像水袖一样形成流动但连续的曲面，暖白与朱红点缀，现代简洁，三分之四正面视角，居中完整展示，比例真实，轮廓清楚，纯浅灰背景，柔和产品摄影棚光线，无人物、无舞台、无布景、无文字、无包装，适合后续生成可旋转三维概念模型。；设计 Brief：{\"product_type\": \"桌面灯\", \"culture_cues\": \"水袖\", \"function\": \"桌面氛围照明\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。\n参考依据：水袖；设计参考：水袖文化线索，正式使用前需补充权威资料核验。；来源：",
+      "brief_revision": 2,
+      "source_turn_id": "turn_528ae18f97",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:40:57+00:00",
+      "updated_at": "2026-10-31T15:41:38+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_kunqu_lamp_culture_reference",
+          "title": "水袖",
+          "description": "水袖文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_6a7e62f99a",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_16db7b2c42",
+      "artifact_id": "artifact_glb_12cf08b8c5",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 2,
+      "source_turn_id": "turn_528ae18f97",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_978a8f4b97"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_978a8f4b97",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:41:39+00:00",
+      "updated_at": "2026-10-31T15:42:21+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_6c2049577f",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "image",
+      "status": "failed",
+      "version_id": null,
+      "artifact_id": null,
+      "message": "图片生成失败：name 'asyncio' is not defined",
+      "prompt": "苏州文创产品概念图，产品类型：桌面灯；用户本轮原始需求：为昆曲水袖桌面灯制作三维建模参考图：单一主体、底座灯杆灯罩结构清晰、无人物无道具。；设计 Brief：{\"product_type\": \"桌面灯\", \"culture_cues\": \"水袖\", \"function\": \"桌面氛围照明\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。",
+      "brief_revision": 3,
+      "source_turn_id": "turn_7417dad830",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:59:48+00:00",
+      "updated_at": "2026-10-31T16:00:09+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_a41815ac65",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_51cda33477",
+      "artifact_id": "artifact_image_b1354ce7e6",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面灯；用户本轮原始需求：为昆曲水袖桌面灯制作三维建模参考图：单一主体、底座灯杆灯罩结构清晰、无人物无道具。；设计 Brief：{\"product_type\": \"桌面灯\", \"culture_cues\": \"水袖\", \"function\": \"桌面氛围照明\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。",
+      "brief_revision": 4,
+      "source_turn_id": "turn_31302a65d4",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T16:00:56+00:00",
+      "updated_at": "2026-10-31T16:02:01+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_6addd67e32",
+      "direction_id": "direction_prj_kunqu_lamp",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_51cda33477",
+      "artifact_id": "artifact_glb_45ad1f76f6",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 4,
+      "source_turn_id": "turn_31302a65d4",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_d90b639829",
+        "artifact_image_7970bc9058",
+        "artifact_image_011f315050",
+        "artifact_image_b1354ce7e6",
+        "artifact_image_6da961a698"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_d90b639829",
+          "media_type": "image/png",
+          "view_label": "front"
+        },
+        {
+          "artifact_id": "artifact_image_7970bc9058",
+          "media_type": "image/png",
+          "view_label": "back"
+        },
+        {
+          "artifact_id": "artifact_image_011f315050",
+          "media_type": "image/png",
+          "view_label": "top"
+        },
+        {
+          "artifact_id": "artifact_image_b1354ce7e6",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        },
+        {
+          "artifact_id": "artifact_image_6da961a698",
+          "media_type": "image/png",
+          "view_label": "side"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T16:02:18+00:00",
+      "updated_at": "2026-10-31T16:03:56+00:00"
+    }
+  ],
+  "stage_gates": [
+    {
+      "stage": "capturing",
+      "status": "active",
+      "reason": "等待用户表达第一轮设计意图",
+      "updated_at": "2026-10-31T14:10:30+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:33:33+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:34:22+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:34:23+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:34:23+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T15:35:07+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:40:57+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:41:38+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:41:39+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:41:39+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T15:42:21+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:59:48+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "blocked",
+      "reason": "图片生成失败：name 'asyncio' is not defined",
+      "updated_at": "2026-10-31T16:00:09+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T16:00:56+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T16:02:01+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T16:02:18+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T16:02:18+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T16:03:56+00:00"
+    }
+  ]
+}
