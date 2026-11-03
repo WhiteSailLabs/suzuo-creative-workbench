@@ -1,0 +1,66 @@
+{
+  "artifact_image_aeea8d45a7": {
+    "file": "files/artifact_image_aeea8d45a7.svg",
+    "media_type": "image/svg+xml"
+  },
+  "artifact_image_7da10d7c3c": {
+    "file": "files/artifact_image_7da10d7c3c.png",
+    "media_type": "image/png"
+  },
+  "artifact_glb_a776e1bb22": {
+    "file": "files/de034b05-5476-4b1b-9880-8ff12dd76403-base_basic_pbr.glb",
+    "media_type": "model/gltf-binary"
+  },
+  "artifact_image_34e83631fe": {
+    "file": "files/artifact_image_34e83631fe.png",
+    "media_type": "image/png"
+  },
+  "artifact_glb_f790ade7c9": {
+    "file": "files/7b161c25-5031-4160-8346-5213ffa8b853-base_basic_pbr.glb",
+    "media_type": "model/gltf-binary"
+  },
+  "artifact_image_eb6a1759c8": {
+    "file": "files/artifact_image_eb6a1759c8.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_ffb817221f": {
+    "file": "files/artifact_image_ffb817221f.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_dfa737bb6c": {
+    "file": "files/artifact_image_dfa737bb6c.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_70f6784da1": {
+    "file": "files/artifact_image_70f6784da1.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_c618c0da97": {
+    "file": "files/artifact_image_c618c0da97.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_999939cf2b": {
+    "file": "files/artifact_image_999939cf2b.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_ab52a1ce91": {
+    "file": "files/artifact_image_ab52a1ce91.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_69a5fec364": {
+    "file": "files/artifact_image_69a5fec364.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_cc30f01bd3": {
+    "file": "files/artifact_image_cc30f01bd3.png",
+    "media_type": "image/png"
+  },
+  "artifact_image_f7d278db4b": {
+    "file": "files/artifact_image_f7d278db4b.png",
+    "media_type": "image/png"
+  },
+  "artifact_glb_c51915d5e7": {
+    "file": "files/8d315cf6-7406-44da-8bef-e585b7b10360-base_basic_pbr.glb",
+    "media_type": "model/gltf-binary"
+  }
+}
