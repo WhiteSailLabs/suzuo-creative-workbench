@@ -1,0 +1,1534 @@
+{
+  "project": {
+    "id": "prj_suzhou_incense",
+    "name": "苏州园林 · 漏景香插",
+    "product_type": "桌面香插",
+    "stage": "reviewing",
+    "stage_status": "awaiting_confirmation",
+    "active_direction_id": "direction_incense_leak_view",
+    "owner": "",
+    "collaborators": [],
+    "target_user": "",
+    "use_scene": "",
+    "brief_revision": 8,
+    "candidate_version_id": "version_6c212e6de2",
+    "created_at": "2026-10-31T14:10:30+00:00",
+    "updated_at": "2026-10-31T16:04:19+00:00"
+  },
+  "active_direction_id": "direction_incense_leak_view",
+  "directions": [
+    {
+      "id": "direction_incense_leak_view",
+      "name": "漏景",
+      "concept": "将园林漏景转译为香烟穿行的层次空间",
+      "status": "draft",
+      "culture_ids": [
+        "culture_fact_1",
+        "culture_leak_view_translation",
+        "culture_fact_2",
+        "culture_translation_2",
+        "culture_fact_3",
+        "culture_translation_3",
+        "culture_fact_4",
+        "culture_translation_4",
+        "culture_fact_5",
+        "culture_translation_5"
+      ],
+      "material_ids": [],
+      "created_at": "2026-10-31T14:10:30+00:00",
+      "updated_at": "2026-10-31T14:10:30+00:00"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "artifact_image_aeea8d45a7",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_f81ecbcc19",
+      "title": "V1 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_416b30129e",
+      "source_culture_ids": [
+        "culture_fact_1",
+        "culture_leak_view_translation",
+        "culture_fact_2",
+        "culture_translation_2",
+        "culture_fact_3",
+        "culture_translation_3",
+        "culture_fact_4",
+        "culture_translation_4",
+        "culture_fact_5",
+        "culture_translation_5"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:05:25+00:00",
+      "updated_at": "2026-10-31T15:32:36+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_aeea8d45a7",
+      "media_type": "image/svg+xml"
+    },
+    {
+      "asset_id": "artifact_image_7da10d7c3c",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_b859e58b07",
+      "title": "V2 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_d25653888b",
+      "source_culture_ids": [
+        "culture_fact_1"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:32:27+00:00",
+      "updated_at": "2026-10-31T15:39:06+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_7da10d7c3c",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_a776e1bb22",
+      "asset_type": "model_glb",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_b859e58b07",
+      "title": "V2 model_glb",
+      "status": "stale",
+      "source_asset_ids": [
+        "artifact_image_7da10d7c3c"
+      ],
+      "source_turn_id": "turn_d25653888b",
+      "source_culture_ids": [
+        "culture_fact_1",
+        "culture_leak_view_translation",
+        "culture_fact_2",
+        "culture_translation_2",
+        "culture_fact_3",
+        "culture_translation_3",
+        "culture_fact_4",
+        "culture_translation_4",
+        "culture_fact_5",
+        "culture_translation_5"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:33:30+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_a776e1bb22",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "preview"
+    },
+    {
+      "asset_id": "artifact_image_34e83631fe",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_8cb5ff0f60",
+      "title": "V3 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_70f451207b",
+      "source_culture_ids": [
+        "culture_fact_1"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:39:05+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_34e83631fe",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_f790ade7c9",
+      "asset_type": "model_glb",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_8cb5ff0f60",
+      "title": "V3 model_glb",
+      "status": "stale",
+      "source_asset_ids": [
+        "artifact_image_34e83631fe"
+      ],
+      "source_turn_id": "turn_70f451207b",
+      "source_culture_ids": [
+        "culture_fact_1",
+        "culture_leak_view_translation",
+        "culture_fact_2",
+        "culture_translation_2",
+        "culture_fact_3",
+        "culture_translation_3",
+        "culture_fact_4",
+        "culture_translation_4",
+        "culture_fact_5",
+        "culture_translation_5"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:39:47+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_f790ade7c9",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "preview"
+    },
+    {
+      "asset_id": "artifact_image_eb6a1759c8",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_62cc82dbf4",
+      "title": "V4 image",
+      "status": "completed",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_d25ed98731",
+      "source_culture_ids": [
+        "culture_fact_1"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:57:53+00:00",
+      "updated_at": "2026-10-31T15:57:53+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_eb6a1759c8",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_image_999939cf2b",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_6c212e6de2",
+      "title": "V5 image",
+      "status": "selected",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_8c8809695a",
+      "source_culture_ids": [],
+      "tags": [],
+      "created_at": "2026-10-31T16:02:09+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_999939cf2b",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_c51915d5e7",
+      "asset_type": "model_glb",
+      "project_id": "prj_suzhou_incense",
+      "direction_id": "direction_incense_leak_view",
+      "version_id": "version_6c212e6de2",
+      "title": "V5 model_glb",
+      "status": "completed",
+      "source_asset_ids": [
+        "artifact_image_ab52a1ce91",
+        "artifact_image_cc30f01bd3",
+        "artifact_image_f7d278db4b",
+        "artifact_image_999939cf2b",
+        "artifact_image_69a5fec364"
+      ],
+      "source_turn_id": "turn_8c8809695a",
+      "source_culture_ids": [
+        "culture_fact_1",
+        "culture_leak_view_translation",
+        "culture_fact_2",
+        "culture_translation_2",
+        "culture_fact_3",
+        "culture_translation_3",
+        "culture_fact_4",
+        "culture_translation_4",
+        "culture_fact_5",
+        "culture_translation_5"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T16:04:19+00:00",
+      "updated_at": "2026-10-31T16:04:19+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_c51915d5e7",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "final"
+    }
+  ],
+  "reviews": [],
+  "proposals": [],
+  "proposal_asset_ids": [],
+  "proposal_selection_explicit": false,
+  "brief_revisions": [
+    {
+      "revision": 0,
+      "confirmed": {},
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": null,
+      "created_at": "2026-10-31T14:10:30+00:00"
+    },
+    {
+      "revision": 1,
+      "confirmed": {},
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待确认",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_fc6af7fef3",
+      "created_at": "2026-10-31T14:17:42+00:00"
+    },
+    {
+      "revision": 2,
+      "confirmed": {},
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待确认",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_55fa476ee2",
+      "created_at": "2026-10-31T14:27:58+00:00"
+    },
+    {
+      "revision": 3,
+      "confirmed": {
+        "product_type": "桌面香插",
+        "cultural_direction": "苏州园林的空间关系"
+      },
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待确认",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_416b30129e",
+      "created_at": "2026-10-31T15:05:02+00:00"
+    },
+    {
+      "revision": 4,
+      "confirmed": {
+        "product_type": "桌面香插",
+        "cultural_direction": "苏州园林的空间关系"
+      },
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待讨论",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_d25653888b",
+      "created_at": "2026-10-31T15:07:36+00:00"
+    },
+    {
+      "revision": 5,
+      "confirmed": {
+        "product_type": "桌面香插",
+        "cultural_direction": "苏州园林的空间关系"
+      },
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待讨论",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_70f451207b",
+      "created_at": "2026-10-31T15:38:33+00:00"
+    },
+    {
+      "revision": 6,
+      "confirmed": {
+        "product_type": "桌面香插",
+        "cultural_direction": "苏州园林的空间关系"
+      },
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待讨论",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_d25ed98731",
+      "created_at": "2026-10-31T15:55:02+00:00"
+    },
+    {
+      "revision": 7,
+      "confirmed": {
+        "product_type": "桌面香插",
+        "cultural_direction": "苏州园林的空间关系"
+      },
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待讨论",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_2ba6b8dd9d",
+      "created_at": "2026-10-31T15:59:47+00:00"
+    },
+    {
+      "revision": 8,
+      "confirmed": {
+        "product_type": "桌面香插",
+        "cultural_direction": "苏州园林的空间关系"
+      },
+      "assumptions": {
+        "target_user": "年轻用户",
+        "use_scene": "书桌与居家空间",
+        "style": "现代简洁",
+        "theme_direction": "苏州园林意象",
+        "material": "待讨论",
+        "dimensions": "待确认",
+        "incense_structure": "待确认"
+      },
+      "conflicts": [],
+      "missing": [
+        "material",
+        "dimensions",
+        "incense_structure"
+      ],
+      "source_turn_id": "turn_8c8809695a",
+      "created_at": "2026-10-31T16:00:55+00:00"
+    }
+  ],
+  "culture": [
+    {
+      "id": "culture_fact_1",
+      "kind": "fact",
+      "title": "漏景",
+      "statement": "有遮有露的界面形成含蓄而有层次的观看关系。",
+      "source_title": "苏州园林空间语言 · Demo 种子资料",
+      "source_url": "",
+      "note": "首版演示资料，进入正式提案前需补充权威出处。",
+      "verified": false,
+      "kind_label": "文化事实"
+    },
+    {
+      "id": "culture_leak_view_translation",
+      "kind": "translation",
+      "title": "漏景的产品转译",
+      "statement": "用局部开口、前后层次与香烟穿行路径表达空间含蓄感。",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "现代产品设计解释，不作为历史事实陈述。",
+      "verified": true,
+      "kind_label": "设计转译"
+    },
+    {
+      "id": "culture_fact_2",
+      "kind": "fact",
+      "title": "框景",
+      "statement": "通过门、窗或洞口限定观看范围，形成画面感。",
+      "source_title": "苏州园林空间语言 · Demo 种子资料",
+      "source_url": "",
+      "note": "首版演示资料，进入正式提案前需补充权威出处。",
+      "verified": false,
+      "kind_label": "文化事实"
+    },
+    {
+      "id": "culture_translation_2",
+      "kind": "translation",
+      "title": "框景的产品转译",
+      "statement": "以产品开口框取内部香座和烟气，让使用过程成为画面。",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "现代产品设计解释，不作为历史事实陈述。",
+      "verified": true,
+      "kind_label": "设计转译"
+    },
+    {
+      "id": "culture_fact_3",
+      "kind": "fact",
+      "title": "借景",
+      "statement": "把园外或远处景物纳入当前空间的观看关系。",
+      "source_title": "苏州园林空间语言 · Demo 种子资料",
+      "source_url": "",
+      "note": "首版演示资料，进入正式提案前需补充权威出处。",
+      "verified": false,
+      "kind_label": "文化事实"
+    },
+    {
+      "id": "culture_translation_3",
+      "kind": "translation",
+      "title": "借景的产品转译",
+      "statement": "让桌面环境、光影和使用者视角参与产品造型。",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "现代产品设计解释，不作为历史事实陈述。",
+      "verified": true,
+      "kind_label": "设计转译"
+    },
+    {
+      "id": "culture_fact_4",
+      "kind": "fact",
+      "title": "层次",
+      "statement": "通过空间前后、开合和虚实关系形成丰富体验。",
+      "source_title": "苏州园林空间语言 · Demo 种子资料",
+      "source_url": "",
+      "note": "首版演示资料，进入正式提案前需补充权威出处。",
+      "verified": false,
+      "kind_label": "文化事实"
+    },
+    {
+      "id": "culture_translation_4",
+      "kind": "translation",
+      "title": "层次的产品转译",
+      "statement": "使用前后两层体块，而不是把纹样平贴在表面。",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "现代产品设计解释，不作为历史事实陈述。",
+      "verified": true,
+      "kind_label": "设计转译"
+    },
+    {
+      "id": "culture_fact_5",
+      "kind": "fact",
+      "title": "留白",
+      "statement": "以克制和空缺给观看与想象保留空间。",
+      "source_title": "苏州园林空间语言 · Demo 种子资料",
+      "source_url": "",
+      "note": "首版演示资料，进入正式提案前需补充权威出处。",
+      "verified": false,
+      "kind_label": "文化事实"
+    },
+    {
+      "id": "culture_translation_5",
+      "kind": "translation",
+      "title": "留白的产品转译",
+      "statement": "减少装饰密度，让负空间、光线与烟气成为设计组成。",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "现代产品设计解释，不作为历史事实陈述。",
+      "verified": true,
+      "kind_label": "设计转译"
+    }
+  ],
+  "turns": [
+    {
+      "id": "turn_fc6af7fef3",
+      "text": "做一个苏州园林香插，面向年轻用户，适用于书桌与居家空间，现代简洁",
+      "intent": "GENERATE",
+      "restatement": "设计一款以苏州园林意象为方向的现代简洁香插，面向年轻用户，适用于书桌及居家空间。",
+      "change_patch": {
+        "changes": {
+          "product_type": "香插",
+          "design_direction": "苏州园林意象、现代简洁",
+          "target_user": "年轻用户",
+          "use_scene": [
+            "书桌",
+            "居家空间"
+          ]
+        },
+        "preserve": [
+          "年轻用户定位",
+          "书桌与居家空间使用场景",
+          "现代简洁的整体风格"
+        ],
+        "constraints": [
+          "需体现苏州园林相关意象，但不预设具体造型或文化寓意",
+          "需适配香品使用与日常清洁维护",
+          "需控制体量，适合放置于书桌和居家空间",
+          "避免过度复杂的装饰和结构"
+        ]
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {
+          "target_user": "年轻用户",
+          "use_scene": "书桌与居家空间",
+          "style": "现代简洁",
+          "theme_direction": "苏州园林意象",
+          "material": "待确认",
+          "dimensions": "待确认",
+          "incense_structure": "待确认"
+        }
+      },
+      "brief_revision": 1,
+      "interpreter_mode": "provider",
+      "correction_of": null,
+      "created_at": "2026-10-31T14:17:42+00:00"
+    },
+    {
+      "id": "turn_55fa476ee2",
+      "text": "继续",
+      "intent": "DISCUSS",
+      "restatement": "继续完善当前苏州园林意象、面向年轻用户、适用于书桌与居家空间、现代简洁风格的文创设计Brief。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [
+          "目标用户：年轻用户",
+          "使用场景：书桌与居家空间",
+          "风格：现代简洁",
+          "主题方向：苏州园林意象"
+        ],
+        "constraints": [
+          "当前仅继续讨论与完善Brief，不启动生成",
+          "材料、尺寸和香具结构尚未确认"
+        ]
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {
+          "target_user": "年轻用户",
+          "use_scene": "书桌与居家空间",
+          "style": "现代简洁",
+          "theme_direction": "苏州园林意象",
+          "material": "待确认",
+          "dimensions": "待确认",
+          "incense_structure": "待确认"
+        }
+      },
+      "brief_revision": 2,
+      "interpreter_mode": "provider",
+      "correction_of": null,
+      "created_at": "2026-10-31T14:27:58+00:00"
+    },
+    {
+      "id": "turn_416b30129e",
+      "text": "做一个苏州园林漏景香插，青灰陶瓷，现代简洁",
+      "intent": "DISCUSS",
+      "restatement": "我理解为：为年轻用户设计一件现代、克制的桌面香插，用苏州园林的空间关系形成文化辨识度，避免仿古和符号堆砌。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "product_type": "桌面香插",
+          "cultural_direction": "苏州园林的空间关系"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 3,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:05:02+00:00"
+    },
+    {
+      "id": "turn_d25653888b",
+      "text": "做一个苏州园林漏景香插，青灰陶瓷材质，现代简洁，生成二维概念",
+      "intent": "GENERATE",
+      "restatement": "我理解为：为年轻用户设计一件现代、克制的桌面香插，用苏州园林的空间关系形成文化辨识度，避免仿古和符号堆砌。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "product_type": "桌面香插",
+          "cultural_direction": "苏州园林的空间关系"
+        },
+        "assumptions": {
+          "material": "待讨论"
+        }
+      },
+      "brief_revision": 4,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:07:36+00:00"
+    },
+    {
+      "id": "turn_70f451207b",
+      "text": "设计一款适合三维生成的苏州园林漏景香插。单一完整产品主体，现代简洁的桌面香插，青灰色细腻陶瓷，低矮稳定的底座与清晰的漏窗层叠结构，产品正面与侧面轮廓明确，三分之四正面视角，居中完整展示，比例真实，边缘干净，纯浅灰背景，柔和产品摄影棚光线，无手、无香火、无植物、无道具、无文字、无包装，适合后续生成可旋转三维概念模型。",
+      "intent": "GENERATE",
+      "restatement": "我理解为：为年轻用户设计一件现代、克制的桌面香插，用苏州园林的空间关系形成文化辨识度，避免仿古和符号堆砌。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "product_type": "桌面香插",
+          "cultural_direction": "苏州园林的空间关系"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 5,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:38:33+00:00"
+    },
+    {
+      "id": "turn_d25ed98731",
+      "text": "设计一款适合三维生成的苏州园林漏景香插。单一完整产品主体，现代简洁的桌面香插，青灰色细腻陶瓷，低矮稳定的底座与清晰的漏窗层叠结构，产品正面与侧面轮廓明确，三分之四正面视角，居中完整展示，比例真实，边缘干净，纯浅灰背景，柔和产品摄影棚光线，无手、无香火、无植物、无道具、无文字、无包装，适合后续生成可旋转三维概念模型。",
+      "intent": "GENERATE",
+      "restatement": "我理解为：为年轻用户设计一件现代、克制的桌面香插，用苏州园林的空间关系形成文化辨识度，避免仿古和符号堆砌。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "product_type": "桌面香插",
+          "cultural_direction": "苏州园林的空间关系"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 6,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:55:02+00:00"
+    },
+    {
+      "id": "turn_2ba6b8dd9d",
+      "text": "为苏州园林漏景香插制作三维建模参考图：单一主体、青灰陶瓷、结构清晰、无道具。",
+      "intent": "DISCUSS",
+      "restatement": "我理解为：为年轻用户设计一件现代、克制的桌面香插，用苏州园林的空间关系形成文化辨识度，避免仿古和符号堆砌。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "product_type": "桌面香插",
+          "cultural_direction": "苏州园林的空间关系"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 7,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:59:47+00:00"
+    },
+    {
+      "id": "turn_8c8809695a",
+      "text": "为苏州园林漏景香插制作三维建模参考图：单一主体、青灰陶瓷、结构清晰、无道具。",
+      "intent": "DISCUSS",
+      "restatement": "我理解为：为年轻用户设计一件现代、克制的桌面香插，用苏州园林的空间关系形成文化辨识度，避免仿古和符号堆砌。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "product_type": "桌面香插",
+          "cultural_direction": "苏州园林的空间关系"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 8,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T16:00:55+00:00"
+    }
+  ],
+  "versions": [
+    {
+      "id": "version_f81ecbcc19",
+      "direction_id": "direction_incense_leak_view",
+      "label": "V1",
+      "parent_version_id": null,
+      "brief_revision": 3,
+      "source_turn_id": "turn_416b30129e",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_aeea8d45a7",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_aeea8d45a7",
+          "media_type": "image/svg+xml"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:05:25+00:00"
+    },
+    {
+      "id": "version_b859e58b07",
+      "direction_id": "direction_incense_leak_view",
+      "label": "V2",
+      "parent_version_id": null,
+      "brief_revision": 4,
+      "source_turn_id": "turn_d25653888b",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_7da10d7c3c",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_7da10d7c3c",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_a776e1bb22",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_a776e1bb22",
+          "media_type": "model/gltf-binary",
+          "generation_id": "de034b05-5476-4b1b-9880-8ff12dd76403",
+          "role": "preview",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_7da10d7c3c"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:32:27+00:00"
+    },
+    {
+      "id": "version_8cb5ff0f60",
+      "direction_id": "direction_incense_leak_view",
+      "label": "V3",
+      "parent_version_id": null,
+      "brief_revision": 5,
+      "source_turn_id": "turn_70f451207b",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_34e83631fe",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_34e83631fe",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_f790ade7c9",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_f790ade7c9",
+          "media_type": "model/gltf-binary",
+          "generation_id": "7b161c25-5031-4160-8346-5213ffa8b853",
+          "role": "preview",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_34e83631fe"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:39:05+00:00"
+    },
+    {
+      "id": "version_62cc82dbf4",
+      "direction_id": "direction_incense_leak_view",
+      "label": "V4",
+      "parent_version_id": null,
+      "brief_revision": 6,
+      "source_turn_id": "turn_d25ed98731",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_eb6a1759c8",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_eb6a1759c8",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_ffb817221f",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_ffb817221f",
+          "view_label": "front",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_dfa737bb6c",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_dfa737bb6c",
+          "view_label": "side",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_70f6784da1",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_70f6784da1",
+          "view_label": "back",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_c618c0da97",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_c618c0da97",
+          "view_label": "top",
+          "media_type": "image/png"
+        }
+      ],
+      "status": "draft",
+      "created_at": "2026-10-31T15:57:53+00:00"
+    },
+    {
+      "id": "version_6c212e6de2",
+      "direction_id": "direction_incense_leak_view",
+      "label": "V5",
+      "parent_version_id": null,
+      "brief_revision": 8,
+      "source_turn_id": "turn_8c8809695a",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_999939cf2b",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_999939cf2b",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_ab52a1ce91",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_ab52a1ce91",
+          "view_label": "front",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_69a5fec364",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_69a5fec364",
+          "view_label": "side",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_cc30f01bd3",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_cc30f01bd3",
+          "view_label": "back",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_f7d278db4b",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_f7d278db4b",
+          "view_label": "top",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_c51915d5e7",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_c51915d5e7",
+          "media_type": "model/gltf-binary",
+          "generation_id": "8d315cf6-7406-44da-8bef-e585b7b10360",
+          "role": "final",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_ab52a1ce91",
+            "artifact_image_cc30f01bd3",
+            "artifact_image_f7d278db4b",
+            "artifact_image_999939cf2b",
+            "artifact_image_69a5fec364"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "selected",
+      "created_at": "2026-10-31T16:02:09+00:00"
+    }
+  ],
+  "jobs": [
+    {
+      "design_resources": [
+        {
+          "id": "culture:culture_fact_1",
+          "title": "漏景",
+          "description": "有遮有露的界面形成含蓄而有层次的观看关系。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_102a36d360",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_f81ecbcc19",
+      "artifact_id": "artifact_image_aeea8d45a7",
+      "message": "图片已生成",
+      "prompt": "现代苏州文创桌面香插产品概念图，克制、安静、可实际放置线香；设计 Brief：{\"product_type\": \"桌面香插\", \"cultural_direction\": \"苏州园林的空间关系\"}；文化转译：用局部开口、前后层次与香烟穿行路径表达空间含蓄感。；以产品开口框取内部香座和烟气，让使用过程成为画面。；让桌面环境、光影和使用者视角参与产品造型。；使用前后两层体块，而不是把纹样平贴在表面。；减少装饰密度，让负空间、光线与烟气成为设计组成。；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，产品设计渲染，展示稳定底座、镂空层次与香烟路径，不使用文字和旅游纪念品式符号。\n参考依据：漏景；设计参考：有遮有露的界面形成含蓄而有层次的观看关系。；来源：",
+      "brief_revision": 3,
+      "source_turn_id": "turn_416b30129e",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:05:25+00:00",
+      "updated_at": "2026-10-31T15:05:25+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_f25a1e7561",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "rodin",
+      "status": "failed",
+      "version_id": "version_f81ecbcc19",
+      "artifact_id": null,
+      "message": "Rodin 生成失败：Rodin CLI 执行失败，请检查授权或服务状态",
+      "prompt": "",
+      "brief_revision": 3,
+      "source_turn_id": "turn_416b30129e",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_aeea8d45a7"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_aeea8d45a7",
+          "media_type": "image/svg+xml",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:06:14+00:00",
+      "updated_at": "2026-10-31T15:06:16+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:culture_fact_1",
+          "title": "漏景",
+          "description": "有遮有露的界面形成含蓄而有层次的观看关系。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_1f6c92fb75",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_b859e58b07",
+      "artifact_id": "artifact_image_7da10d7c3c",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面香插；用户本轮原始需求：做一个苏州园林漏景香插，青灰陶瓷材质，现代简洁，生成二维概念；设计 Brief：{\"product_type\": \"桌面香插\", \"cultural_direction\": \"苏州园林的空间关系\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。\n参考依据：漏景；设计参考：有遮有露的界面形成含蓄而有层次的观看关系。；来源：",
+      "brief_revision": 4,
+      "source_turn_id": "turn_d25653888b",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:32:00+00:00",
+      "updated_at": "2026-10-31T15:32:27+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:culture_fact_1",
+          "title": "漏景",
+          "description": "有遮有露的界面形成含蓄而有层次的观看关系。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_e2c9f01cb2",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_b859e58b07",
+      "artifact_id": "artifact_glb_a776e1bb22",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 4,
+      "source_turn_id": "turn_d25653888b",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_7da10d7c3c"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_7da10d7c3c",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:32:54+00:00",
+      "updated_at": "2026-10-31T15:33:30+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:culture_fact_1",
+          "title": "漏景",
+          "description": "有遮有露的界面形成含蓄而有层次的观看关系。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_c0d505c120",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_8cb5ff0f60",
+      "artifact_id": "artifact_image_34e83631fe",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面香插；用户本轮原始需求：设计一款适合三维生成的苏州园林漏景香插。单一完整产品主体，现代简洁的桌面香插，青灰色细腻陶瓷，低矮稳定的底座与清晰的漏窗层叠结构，产品正面与侧面轮廓明确，三分之四正面视角，居中完整展示，比例真实，边缘干净，纯浅灰背景，柔和产品摄影棚光线，无手、无香火、无植物、无道具、无文字、无包装，适合后续生成可旋转三维概念模型。；设计 Brief：{\"product_type\": \"桌面香插\", \"cultural_direction\": \"苏州园林的空间关系\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。\n参考依据：漏景；设计参考：有遮有露的界面形成含蓄而有层次的观看关系。；来源：",
+      "brief_revision": 5,
+      "source_turn_id": "turn_70f451207b",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:38:34+00:00",
+      "updated_at": "2026-10-31T15:39:05+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:culture_fact_1",
+          "title": "漏景",
+          "description": "有遮有露的界面形成含蓄而有层次的观看关系。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_1592559ec2",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_8cb5ff0f60",
+      "artifact_id": "artifact_glb_f790ade7c9",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 5,
+      "source_turn_id": "turn_70f451207b",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_34e83631fe"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_34e83631fe",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:39:06+00:00",
+      "updated_at": "2026-10-31T15:39:47+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:culture_fact_1",
+          "title": "漏景",
+          "description": "有遮有露的界面形成含蓄而有层次的观看关系。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_a026f78a92",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_62cc82dbf4",
+      "artifact_id": "artifact_image_eb6a1759c8",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面香插；用户本轮原始需求：设计一款适合三维生成的苏州园林漏景香插。单一完整产品主体，现代简洁的桌面香插，青灰色细腻陶瓷，低矮稳定的底座与清晰的漏窗层叠结构，产品正面与侧面轮廓明确，三分之四正面视角，居中完整展示，比例真实，边缘干净，纯浅灰背景，柔和产品摄影棚光线，无手、无香火、无植物、无道具、无文字、无包装，适合后续生成可旋转三维概念模型。；设计 Brief：{\"product_type\": \"桌面香插\", \"cultural_direction\": \"苏州园林的空间关系\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。\n参考依据：漏景；设计参考：有遮有露的界面形成含蓄而有层次的观看关系。；来源：",
+      "brief_revision": 6,
+      "source_turn_id": "turn_d25ed98731",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:55:04+00:00",
+      "updated_at": "2026-10-31T15:57:53+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_002e9e31c2",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "image",
+      "status": "failed",
+      "version_id": null,
+      "artifact_id": null,
+      "message": "图片生成失败：name 'asyncio' is not defined",
+      "prompt": "苏州文创产品概念图，产品类型：桌面香插；用户本轮原始需求：为苏州园林漏景香插制作三维建模参考图：单一主体、青灰陶瓷、结构清晰、无道具。；设计 Brief：{\"product_type\": \"桌面香插\", \"cultural_direction\": \"苏州园林的空间关系\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。",
+      "brief_revision": 7,
+      "source_turn_id": "turn_2ba6b8dd9d",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:59:49+00:00",
+      "updated_at": "2026-10-31T16:00:12+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_ab454b1c49",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_6c212e6de2",
+      "artifact_id": "artifact_image_999939cf2b",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面香插；用户本轮原始需求：为苏州园林漏景香插制作三维建模参考图：单一主体、青灰陶瓷、结构清晰、无道具。；设计 Brief：{\"product_type\": \"桌面香插\", \"cultural_direction\": \"苏州园林的空间关系\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。",
+      "brief_revision": 8,
+      "source_turn_id": "turn_8c8809695a",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T16:00:56+00:00",
+      "updated_at": "2026-10-31T16:02:09+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_db8445b1e3",
+      "direction_id": "direction_incense_leak_view",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_6c212e6de2",
+      "artifact_id": "artifact_glb_c51915d5e7",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 8,
+      "source_turn_id": "turn_8c8809695a",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_ab52a1ce91",
+        "artifact_image_cc30f01bd3",
+        "artifact_image_f7d278db4b",
+        "artifact_image_999939cf2b",
+        "artifact_image_69a5fec364"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_ab52a1ce91",
+          "media_type": "image/png",
+          "view_label": "front"
+        },
+        {
+          "artifact_id": "artifact_image_cc30f01bd3",
+          "media_type": "image/png",
+          "view_label": "back"
+        },
+        {
+          "artifact_id": "artifact_image_f7d278db4b",
+          "media_type": "image/png",
+          "view_label": "top"
+        },
+        {
+          "artifact_id": "artifact_image_999939cf2b",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        },
+        {
+          "artifact_id": "artifact_image_69a5fec364",
+          "media_type": "image/png",
+          "view_label": "side"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T16:02:18+00:00",
+      "updated_at": "2026-10-31T16:04:19+00:00"
+    }
+  ],
+  "stage_gates": [
+    {
+      "stage": "capturing",
+      "status": "active",
+      "reason": "等待用户表达第一轮设计意图",
+      "updated_at": "2026-10-31T14:10:30+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:05:25+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:05:25+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:06:09+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:06:14+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "blocked",
+      "reason": "Rodin 生成失败：Rodin CLI 执行失败，请检查授权或服务状态",
+      "updated_at": "2026-10-31T15:06:16+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:32:00+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:32:27+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:32:36+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:32:54+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T15:33:30+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:38:34+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:39:05+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:39:06+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:39:06+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T15:39:47+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:55:04+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:57:53+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:59:49+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "blocked",
+      "reason": "图片生成失败：name 'asyncio' is not defined",
+      "updated_at": "2026-10-31T16:00:12+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T16:00:56+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T16:02:09+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T16:02:18+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T16:02:18+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T16:04:19+00:00"
+    }
+  ]
+}
