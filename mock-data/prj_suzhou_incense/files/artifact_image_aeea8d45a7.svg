@@ -1,0 +1,11 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='1280' viewBox='0 0 1024 1280'>
+      <defs><linearGradient id='bg' x1='0' x2='1' y1='0' y2='1'><stop stop-color='#f3efe6'/><stop offset='1' stop-color='#dce5dd'/></linearGradient></defs>
+      <rect width='1024' height='1280' fill='url(#bg)'/>
+      <path d='M322 290 Q512 105 702 290 L702 900 Q512 1000 322 900 Z' fill='#d6c7b8' opacity='.86'/>
+      <path d='M406 350 Q512 235 618 350 L618 740 Q512 820 406 740 Z' fill='#e9eee7'/>
+      <path d='M512 220 L512 540' stroke='#7c6656' stroke-width='8'/>
+      <circle cx='512' cy='218' r='12' fill='#a34836'/>
+      <text x='64' y='1080' font-family='sans-serif' font-size='38' fill='#2f3d38'>演示生成</text>
+      <text x='64' y='1132' font-family='sans-serif' font-size='22' fill='#69766f'>现代苏州文创桌面香插产品概念图，克制、安静、可实际放置线香；设计 Brief：{&quot;product</text>
+      <text x='64' y='1190' font-family='sans-serif' font-size='16' fill='#8d958f'>SUZUO CONCEPT / V1</text>
+    </svg>
