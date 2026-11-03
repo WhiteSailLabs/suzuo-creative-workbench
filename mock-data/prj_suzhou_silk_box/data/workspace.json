@@ -1,0 +1,905 @@
+{
+  "project": {
+    "id": "prj_suzhou_silk_box",
+    "name": "苏州丝绸 · 丝绸收纳盒",
+    "product_type": "桌面收纳盒",
+    "stage": "reviewing",
+    "stage_status": "awaiting_confirmation",
+    "active_direction_id": "direction_prj_suzhou_silk_box",
+    "owner": "",
+    "collaborators": [],
+    "target_user": "",
+    "use_scene": "",
+    "brief_revision": 4,
+    "candidate_version_id": "version_bcc2a3d382",
+    "created_at": "2026-10-31T14:10:30+00:00",
+    "updated_at": "2026-10-31T16:04:12+00:00"
+  },
+  "active_direction_id": "direction_prj_suzhou_silk_box",
+  "directions": [
+    {
+      "id": "direction_prj_suzhou_silk_box",
+      "name": "丝绸",
+      "concept": "将丝绸的经纬秩序转译为收纳盒表面与分格关系",
+      "status": "draft",
+      "culture_ids": [
+        "prj_suzhou_silk_box_culture_reference",
+        "prj_suzhou_silk_box_culture_translation"
+      ],
+      "material_ids": [],
+      "created_at": "2026-10-31T14:10:30+00:00",
+      "updated_at": "2026-10-31T14:10:30+00:00"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "artifact_image_ccd11c3eae",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_silk_box",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "version_id": "version_2a8a117f80",
+      "title": "V1 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_730360ad94",
+      "source_culture_ids": [
+        "prj_suzhou_silk_box_culture_reference",
+        "prj_suzhou_silk_box_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:11:33+00:00",
+      "updated_at": "2026-10-31T15:40:09+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_ccd11c3eae",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_06b0a7cda4",
+      "asset_type": "model_glb",
+      "project_id": "prj_suzhou_silk_box",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "version_id": "version_2a8a117f80",
+      "title": "V1 model_glb",
+      "status": "stale",
+      "source_asset_ids": [
+        "artifact_image_ccd11c3eae"
+      ],
+      "source_turn_id": "turn_730360ad94",
+      "source_culture_ids": [
+        "prj_suzhou_silk_box_culture_reference",
+        "prj_suzhou_silk_box_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:13:07+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_06b0a7cda4",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "preview"
+    },
+    {
+      "asset_id": "artifact_image_3c6b502a48",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_silk_box",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "version_id": "version_130a7558dd",
+      "title": "V2 image",
+      "status": "reviewing",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_5fc8cc786d",
+      "source_culture_ids": [
+        "prj_suzhou_silk_box_culture_reference"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:40:08+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_3c6b502a48",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_bae39d4aef",
+      "asset_type": "model_glb",
+      "project_id": "prj_suzhou_silk_box",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "version_id": "version_130a7558dd",
+      "title": "V2 model_glb",
+      "status": "stale",
+      "source_asset_ids": [
+        "artifact_image_3c6b502a48"
+      ],
+      "source_turn_id": "turn_5fc8cc786d",
+      "source_culture_ids": [
+        "prj_suzhou_silk_box_culture_reference",
+        "prj_suzhou_silk_box_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T15:40:54+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_bae39d4aef",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "preview"
+    },
+    {
+      "asset_id": "artifact_image_d43a88b29b",
+      "asset_type": "image",
+      "project_id": "prj_suzhou_silk_box",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "version_id": "version_bcc2a3d382",
+      "title": "V3 image",
+      "status": "selected",
+      "source_asset_ids": [],
+      "source_turn_id": "turn_9021a7429b",
+      "source_culture_ids": [],
+      "tags": [],
+      "created_at": "2026-10-31T16:02:15+00:00",
+      "updated_at": "2026-10-31T16:02:18+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_image_d43a88b29b",
+      "media_type": "image/png"
+    },
+    {
+      "asset_id": "artifact_glb_6d10d8a6f4",
+      "asset_type": "model_glb",
+      "project_id": "prj_suzhou_silk_box",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "version_id": "version_bcc2a3d382",
+      "title": "V3 model_glb",
+      "status": "completed",
+      "source_asset_ids": [
+        "artifact_image_191aad3d2f",
+        "artifact_image_b6f9890d6d",
+        "artifact_image_ac5c9a84b9",
+        "artifact_image_d43a88b29b",
+        "artifact_image_8094f406c2"
+      ],
+      "source_turn_id": "turn_9021a7429b",
+      "source_culture_ids": [
+        "prj_suzhou_silk_box_culture_reference",
+        "prj_suzhou_silk_box_culture_translation"
+      ],
+      "tags": [],
+      "created_at": "2026-10-31T16:04:12+00:00",
+      "updated_at": "2026-10-31T16:04:12+00:00",
+      "owner": "",
+      "rights_note": "",
+      "url": "/api/workbench/assets/artifact_glb_6d10d8a6f4",
+      "media_type": "model/gltf-binary",
+      "material_status": "pbr",
+      "role": "final"
+    }
+  ],
+  "reviews": [],
+  "proposals": [],
+  "proposal_asset_ids": [],
+  "proposal_selection_explicit": false,
+  "brief_revisions": [
+    {
+      "revision": 0,
+      "confirmed": {
+        "product_type": "桌面收纳盒",
+        "culture_cues": "丝绸",
+        "function": "分类收纳桌面小物"
+      },
+      "assumptions": {
+        "material": "丝绸包覆与木质内胆",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": null,
+      "created_at": "2026-10-31T14:10:30+00:00"
+    },
+    {
+      "revision": 1,
+      "confirmed": {
+        "product_type": "桌面收纳盒",
+        "culture_cues": "丝绸",
+        "function": "分类收纳桌面小物",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "丝绸包覆与木质内胆",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_730360ad94",
+      "created_at": "2026-10-31T15:10:06+00:00"
+    },
+    {
+      "revision": 2,
+      "confirmed": {
+        "product_type": "桌面收纳盒",
+        "culture_cues": "丝绸",
+        "function": "分类收纳桌面小物",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "丝绸包覆与木质内胆",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_5fc8cc786d",
+      "created_at": "2026-10-31T15:39:49+00:00"
+    },
+    {
+      "revision": 3,
+      "confirmed": {
+        "product_type": "桌面收纳盒",
+        "culture_cues": "丝绸",
+        "function": "分类收纳桌面小物",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "丝绸包覆与木质内胆",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_478441a7a8",
+      "created_at": "2026-10-31T15:59:47+00:00"
+    },
+    {
+      "revision": 4,
+      "confirmed": {
+        "product_type": "桌面收纳盒",
+        "culture_cues": "丝绸",
+        "function": "分类收纳桌面小物",
+        "target_user": "年轻用户"
+      },
+      "assumptions": {
+        "material": "丝绸包覆与木质内胆",
+        "use_scene": "书桌与居家空间"
+      },
+      "conflicts": [],
+      "missing": [
+        "dimensions",
+        "structure"
+      ],
+      "source_turn_id": "turn_9021a7429b",
+      "created_at": "2026-10-31T16:00:55+00:00"
+    }
+  ],
+  "culture": [
+    {
+      "id": "prj_suzhou_silk_box_culture_reference",
+      "kind": "to_verify",
+      "title": "丝绸",
+      "statement": "丝绸文化线索，正式使用前需补充权威资料核验。",
+      "source_title": "Demo 待核验线索",
+      "source_url": "",
+      "note": "",
+      "verified": false,
+      "kind_label": "待核验"
+    },
+    {
+      "id": "prj_suzhou_silk_box_culture_translation",
+      "kind": "translation",
+      "title": "丝绸的产品转译",
+      "statement": "将丝绸的经纬秩序转译为收纳盒表面与分格关系",
+      "source_title": "项目设计转译",
+      "source_url": "",
+      "note": "",
+      "verified": true,
+      "kind_label": "设计转译"
+    }
+  ],
+  "turns": [
+    {
+      "id": "turn_730360ad94",
+      "text": "为年轻用户设计苏州丝绸桌面收纳盒，用于书桌整理，奶白色丝绸表面，现代简洁，保留丝绸质感",
+      "intent": "DISCUSS",
+      "restatement": "我会先把这轮内容作为讨论和设计假设记录，不启动生成任务。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [
+          "modern_style"
+        ],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {
+          "target_user": "年轻用户"
+        },
+        "assumptions": {}
+      },
+      "brief_revision": 1,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:10:06+00:00"
+    },
+    {
+      "id": "turn_5fc8cc786d",
+      "text": "设计一款适合三维生成的苏州丝绸桌面收纳盒。单一完整产品主体，方圆角盒体与可辨识的盒盖分件结构，奶白色丝绸包覆表面，细腻织物纹理，现代简洁，结构边界清楚，三分之四正面视角，居中完整展示，比例真实，纯浅灰背景，柔和产品摄影棚光线，无手、无文具、无道具、无文字、无包装，适合后续生成可旋转三维概念模型。",
+      "intent": "GENERATE",
+      "restatement": "我已经记录本轮意图，并会沿用当前 Brief 和已确认约束继续推进。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {}
+      },
+      "brief_revision": 2,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:39:49+00:00"
+    },
+    {
+      "id": "turn_478441a7a8",
+      "text": "为苏州丝绸收纳盒制作三维建模参考图：单一主体、盒盖分件清晰、奶白丝绸、无道具。",
+      "intent": "DISCUSS",
+      "restatement": "我会先把这轮内容作为讨论和设计假设记录，不启动生成任务。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {}
+      },
+      "brief_revision": 3,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T15:59:47+00:00"
+    },
+    {
+      "id": "turn_9021a7429b",
+      "text": "为苏州丝绸收纳盒制作三维建模参考图：单一主体、盒盖分件清晰、奶白丝绸、无道具。",
+      "intent": "DISCUSS",
+      "restatement": "我会先把这轮内容作为讨论和设计假设记录，不启动生成任务。",
+      "change_patch": {
+        "changes": {},
+        "preserve": [],
+        "constraints": []
+      },
+      "brief_patch": {
+        "confirmed": {},
+        "assumptions": {}
+      },
+      "brief_revision": 4,
+      "interpreter_mode": "fallback",
+      "correction_of": null,
+      "created_at": "2026-10-31T16:00:55+00:00"
+    }
+  ],
+  "versions": [
+    {
+      "id": "version_2a8a117f80",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "label": "V1",
+      "parent_version_id": null,
+      "brief_revision": 1,
+      "source_turn_id": "turn_730360ad94",
+      "change_source_turn_id": "turn_730360ad94",
+      "changed_fields": {},
+      "preserved_fields": [
+        "modern_style"
+      ],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_ccd11c3eae",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_ccd11c3eae",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_06b0a7cda4",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_06b0a7cda4",
+          "media_type": "model/gltf-binary",
+          "generation_id": "242e4736-a4b8-4ec2-b02b-18b8613473ba",
+          "role": "preview",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_ccd11c3eae"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:11:33+00:00"
+    },
+    {
+      "id": "version_130a7558dd",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "label": "V2",
+      "parent_version_id": null,
+      "brief_revision": 2,
+      "source_turn_id": "turn_5fc8cc786d",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_3c6b502a48",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_3c6b502a48",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_bae39d4aef",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_bae39d4aef",
+          "media_type": "model/gltf-binary",
+          "generation_id": "ad4aff1c-d14a-4955-9511-a7f85a52bed2",
+          "role": "preview",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_3c6b502a48"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "reviewing",
+      "created_at": "2026-10-31T15:40:08+00:00"
+    },
+    {
+      "id": "version_bcc2a3d382",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "label": "V3",
+      "parent_version_id": null,
+      "brief_revision": 4,
+      "source_turn_id": "turn_9021a7429b",
+      "change_source_turn_id": null,
+      "changed_fields": {},
+      "preserved_fields": [],
+      "constraints": [],
+      "artifacts": [
+        {
+          "id": "artifact_image_d43a88b29b",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_d43a88b29b",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_191aad3d2f",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_191aad3d2f",
+          "view_label": "front",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_8094f406c2",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_8094f406c2",
+          "view_label": "side",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_b6f9890d6d",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_b6f9890d6d",
+          "view_label": "back",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_image_ac5c9a84b9",
+          "kind": "image",
+          "url": "/api/workbench/assets/artifact_image_ac5c9a84b9",
+          "view_label": "top",
+          "media_type": "image/png"
+        },
+        {
+          "id": "artifact_glb_6d10d8a6f4",
+          "kind": "model_glb",
+          "url": "/api/workbench/assets/artifact_glb_6d10d8a6f4",
+          "media_type": "model/gltf-binary",
+          "generation_id": "ca00309e-c470-4af3-a51a-1af30c5ad5f5",
+          "role": "final",
+          "input_mode": "image",
+          "reference_artifact_ids": [
+            "artifact_image_191aad3d2f",
+            "artifact_image_b6f9890d6d",
+            "artifact_image_ac5c9a84b9",
+            "artifact_image_d43a88b29b",
+            "artifact_image_8094f406c2"
+          ],
+          "consistency_status": "pending",
+          "disclaimer": "概念模型，不是生产 CAD",
+          "material_status": "pbr"
+        }
+      ],
+      "status": "selected",
+      "created_at": "2026-10-31T16:02:15+00:00"
+    }
+  ],
+  "jobs": [
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_suzhou_silk_box_culture_reference",
+          "title": "丝绸",
+          "description": "丝绸文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [
+        "modern_style"
+      ],
+      "id": "job_image_244dec86ca",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_2a8a117f80",
+      "artifact_id": "artifact_image_ccd11c3eae",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面收纳盒；用户本轮原始需求：为年轻用户设计苏州丝绸桌面收纳盒，用于书桌整理，奶白色丝绸表面，现代简洁，保留丝绸质感；设计 Brief：{\"product_type\": \"桌面收纳盒\", \"culture_cues\": \"丝绸\", \"function\": \"分类收纳桌面小物\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[\"modern_style\"]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。；本轮明确变化：{}；明确保留：[\"modern_style\"]\n参考依据：丝绸；设计参考：丝绸文化线索，正式使用前需补充权威资料核验。；来源：",
+      "brief_revision": 1,
+      "source_turn_id": "turn_730360ad94",
+      "change_source_turn_id": "turn_730360ad94",
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:11:11+00:00",
+      "updated_at": "2026-10-31T15:11:33+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_f5db9c41d1",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_2a8a117f80",
+      "artifact_id": "artifact_glb_06b0a7cda4",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 1,
+      "source_turn_id": "turn_730360ad94",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_ccd11c3eae"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_ccd11c3eae",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:12:26+00:00",
+      "updated_at": "2026-10-31T15:13:07+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_suzhou_silk_box_culture_reference",
+          "title": "丝绸",
+          "description": "丝绸文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_999e8f361c",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_130a7558dd",
+      "artifact_id": "artifact_image_3c6b502a48",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面收纳盒；用户本轮原始需求：设计一款适合三维生成的苏州丝绸桌面收纳盒。单一完整产品主体，方圆角盒体与可辨识的盒盖分件结构，奶白色丝绸包覆表面，细腻织物纹理，现代简洁，结构边界清楚，三分之四正面视角，居中完整展示，比例真实，纯浅灰背景，柔和产品摄影棚光线，无手、无文具、无道具、无文字、无包装，适合后续生成可旋转三维概念模型。；设计 Brief：{\"product_type\": \"桌面收纳盒\", \"culture_cues\": \"丝绸\", \"function\": \"分类收纳桌面小物\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。\n参考依据：丝绸；设计参考：丝绸文化线索，正式使用前需补充权威资料核验。；来源：",
+      "brief_revision": 2,
+      "source_turn_id": "turn_5fc8cc786d",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:39:49+00:00",
+      "updated_at": "2026-10-31T15:40:08+00:00"
+    },
+    {
+      "design_resources": [
+        {
+          "id": "culture:prj_suzhou_silk_box_culture_reference",
+          "title": "丝绸",
+          "description": "丝绸文化线索，正式使用前需补充权威资料核验。",
+          "source_url": "",
+          "image_url": "",
+          "license": "文化依据 · 图片未引用",
+          "source": "项目资料"
+        }
+      ],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_866ea07c44",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_130a7558dd",
+      "artifact_id": "artifact_glb_bae39d4aef",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 2,
+      "source_turn_id": "turn_5fc8cc786d",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_3c6b502a48"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_3c6b502a48",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T15:40:09+00:00",
+      "updated_at": "2026-10-31T15:40:54+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_55bc5d2d74",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "image",
+      "status": "failed",
+      "version_id": null,
+      "artifact_id": null,
+      "message": "图片生成失败：name 'asyncio' is not defined",
+      "prompt": "苏州文创产品概念图，产品类型：桌面收纳盒；用户本轮原始需求：为苏州丝绸收纳盒制作三维建模参考图：单一主体、盒盖分件清晰、奶白丝绸、无道具。；设计 Brief：{\"product_type\": \"桌面收纳盒\", \"culture_cues\": \"丝绸\", \"function\": \"分类收纳桌面小物\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。",
+      "brief_revision": 3,
+      "source_turn_id": "turn_478441a7a8",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T15:59:48+00:00",
+      "updated_at": "2026-10-31T16:00:09+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_image_a812ca4f55",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "image",
+      "status": "completed",
+      "version_id": "version_bcc2a3d382",
+      "artifact_id": "artifact_image_d43a88b29b",
+      "message": "图片已生成",
+      "prompt": "苏州文创产品概念图，产品类型：桌面收纳盒；用户本轮原始需求：为苏州丝绸收纳盒制作三维建模参考图：单一主体、盒盖分件清晰、奶白丝绸、无道具。；设计 Brief：{\"product_type\": \"桌面收纳盒\", \"culture_cues\": \"丝绸\", \"function\": \"分类收纳桌面小物\", \"target_user\": \"年轻用户\"}；本轮变化：{}；必须保留：[]；结构约束：[]；纯色背景，专业产品设计渲染，遵循用户需求与已选参考，不添加无关文字。",
+      "brief_revision": 4,
+      "source_turn_id": "turn_9021a7429b",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": null,
+      "reference_artifact_ids": [],
+      "reference_snapshot": [],
+      "consistency_status": null,
+      "created_at": "2026-10-31T16:00:55+00:00",
+      "updated_at": "2026-10-31T16:02:15+00:00"
+    },
+    {
+      "design_resources": [],
+      "changes": {},
+      "preserve": [],
+      "id": "job_rodin_af61886b23",
+      "direction_id": "direction_prj_suzhou_silk_box",
+      "kind": "rodin",
+      "status": "completed",
+      "version_id": "version_bcc2a3d382",
+      "artifact_id": "artifact_glb_6d10d8a6f4",
+      "message": "三维概念模型已完成",
+      "prompt": "",
+      "brief_revision": 4,
+      "source_turn_id": "turn_9021a7429b",
+      "change_source_turn_id": null,
+      "base_version_id": null,
+      "attempt": 1,
+      "retry_of": null,
+      "input_mode": "image",
+      "reference_artifact_ids": [
+        "artifact_image_191aad3d2f",
+        "artifact_image_b6f9890d6d",
+        "artifact_image_ac5c9a84b9",
+        "artifact_image_d43a88b29b",
+        "artifact_image_8094f406c2"
+      ],
+      "reference_snapshot": [
+        {
+          "artifact_id": "artifact_image_191aad3d2f",
+          "media_type": "image/png",
+          "view_label": "front"
+        },
+        {
+          "artifact_id": "artifact_image_b6f9890d6d",
+          "media_type": "image/png",
+          "view_label": "back"
+        },
+        {
+          "artifact_id": "artifact_image_ac5c9a84b9",
+          "media_type": "image/png",
+          "view_label": "top"
+        },
+        {
+          "artifact_id": "artifact_image_d43a88b29b",
+          "media_type": "image/png",
+          "view_label": "unknown"
+        },
+        {
+          "artifact_id": "artifact_image_8094f406c2",
+          "media_type": "image/png",
+          "view_label": "side"
+        }
+      ],
+      "consistency_status": "pending",
+      "created_at": "2026-10-31T16:02:18+00:00",
+      "updated_at": "2026-10-31T16:04:12+00:00"
+    }
+  ],
+  "stage_gates": [
+    {
+      "stage": "capturing",
+      "status": "active",
+      "reason": "等待用户表达第一轮设计意图",
+      "updated_at": "2026-10-31T14:10:30+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:11:11+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:11:33+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:12:01+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:12:26+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T15:13:07+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:39:49+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T15:40:08+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T15:40:09+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T15:40:09+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T15:40:54+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T15:59:48+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "blocked",
+      "reason": "图片生成失败：name 'asyncio' is not defined",
+      "updated_at": "2026-10-31T16:00:09+00:00"
+    },
+    {
+      "stage": "concepting",
+      "status": "active",
+      "reason": "正在把本轮对话转成二维概念",
+      "updated_at": "2026-10-31T16:00:55+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维概念已生成，等待锁定候选版本",
+      "updated_at": "2026-10-31T16:02:15+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "awaiting_confirmation",
+      "reason": "二维候选已锁定，可以生成三维模型",
+      "updated_at": "2026-10-31T16:02:18+00:00"
+    },
+    {
+      "stage": "prototyping",
+      "status": "active",
+      "reason": "正在从锁定的二维候选生成三维模型",
+      "updated_at": "2026-10-31T16:02:18+00:00"
+    },
+    {
+      "stage": "reviewing",
+      "status": "awaiting_confirmation",
+      "reason": "二维与三维成果已关联，等待评审",
+      "updated_at": "2026-10-31T16:04:12+00:00"
+    }
+  ]
+}
